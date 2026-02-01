@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { prisma } from "@/lib/prisma"
 import { CourseGrid } from "@/components/courses/course-grid"
 import { CourseFilters } from "@/components/courses/course-filters"
@@ -150,7 +151,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       </div>
 
       <div className="mb-8">
-        <CourseFilters categories={categories} />
+        <Suspense fallback={<div className="h-10 animate-pulse bg-muted rounded" />}>
+          <CourseFilters categories={categories} />
+        </Suspense>
       </div>
 
       {courses.length > 0 ? (
