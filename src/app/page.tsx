@@ -101,23 +101,23 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 bg-gradient-to-br from-primary/10 via-background to-background">
+      <section className="relative py-12 md:py-20 lg:py-32 bg-gradient-to-br from-primary/10 via-background to-background overflow-hidden">
         <div className="container">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="space-y-6 md:space-y-8 text-center lg:text-left">
               <Badge variant="secondary" className="px-4 py-1">
                 Learn from industry experts
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                 Unlock Your Potential with{" "}
                 <span className="text-primary">World-Class Learning</span>
               </h1>
-              <p className="text-xl text-muted-foreground max-w-lg">
+              <p className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0">
                 Join millions of learners worldwide. Master new skills, advance
                 your career, and explore your passions with our expert-led
                 courses.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button size="lg" asChild>
                   <Link href="/courses">
                     Explore Courses
@@ -128,7 +128,7 @@ export default async function HomePage() {
                   <Link href="/become-instructor">Become an Instructor</Link>
                 </Button>
               </div>
-              <div className="flex flex-wrap items-center gap-6 pt-4">
+              <div className="flex flex-wrap items-center gap-4 md:gap-6 pt-4 justify-center lg:justify-start">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <span className="text-sm">Lifetime access</span>
@@ -143,8 +143,8 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="relative hidden lg:block">
-              <div className="relative w-full h-[500px]">
+            <div className="relative order-first lg:order-last">
+              <div className="relative w-full h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px]">
                 <Image
                   src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800"
                   alt="Students learning"
@@ -208,16 +208,16 @@ export default async function HomePage() {
 
       {/* Categories Section */}
       {categories.length > 0 && (
-        <section className="py-16 md:py-24">
+        <section className="py-12 md:py-16 lg:py-24">
           <div className="container">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">Browse Categories</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl md:text-3xl font-bold mb-2">Browse Categories</h2>
                 <p className="text-muted-foreground">
                   Explore our wide range of course categories
                 </p>
               </div>
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="w-full sm:w-auto">
                 <Link href="/categories">View All</Link>
               </Button>
             </div>
@@ -251,16 +251,16 @@ export default async function HomePage() {
 
       {/* Featured Courses Section */}
       {featuredCourses.length > 0 && (
-        <section className="py-16 md:py-24 bg-muted/30">
+        <section className="py-12 md:py-16 lg:py-24 bg-muted/30">
           <div className="container">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">Featured Courses</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl md:text-3xl font-bold mb-2">Featured Courses</h2>
                 <p className="text-muted-foreground">
                   Hand-picked courses by our team
                 </p>
               </div>
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="w-full sm:w-auto">
                 <Link href="/courses">View All</Link>
               </Button>
             </div>
