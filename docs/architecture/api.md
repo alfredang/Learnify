@@ -168,6 +168,165 @@ POST /api/checkout
 }
 ```
 
+## Sections API
+
+### Create Section
+
+```http
+POST /api/courses/:id/sections
+```
+
+**Requires:** Course owner or Admin
+
+**Request Body:**
+
+```json
+{
+  "title": "Getting Started",
+  "description": "Introduction to the course"
+}
+```
+
+### Reorder Sections
+
+```http
+PUT /api/courses/:id/sections/reorder
+```
+
+**Requires:** Course owner or Admin
+
+**Request Body:**
+
+```json
+{
+  "orderedIds": ["section1-id", "section2-id", "section3-id"]
+}
+```
+
+### Update / Delete Section
+
+```http
+PUT    /api/courses/:id/sections/:sectionId
+DELETE /api/courses/:id/sections/:sectionId
+```
+
+**Requires:** Course owner or Admin
+
+## Lectures API
+
+### Create Lecture
+
+```http
+POST /api/courses/:id/sections/:sectionId/lectures
+```
+
+**Requires:** Course owner or Admin
+
+**Request Body:**
+
+```json
+{
+  "title": "Introduction Video",
+  "type": "VIDEO",
+  "videoUrl": "https://res.cloudinary.com/...",
+  "videoDuration": 360,
+  "isFreePreview": true
+}
+```
+
+Lecture types: `VIDEO`, `TEXT`, `QUIZ`
+
+### Reorder Lectures
+
+```http
+PUT /api/courses/:id/sections/:sectionId/lectures/reorder
+```
+
+### Update / Delete Lecture
+
+```http
+PUT    /api/courses/:id/sections/:sectionId/lectures/:lectureId
+DELETE /api/courses/:id/sections/:sectionId/lectures/:lectureId
+```
+
+## Progress API
+
+### Update Lecture Progress
+
+```http
+POST /api/lectures/:lectureId/progress
+```
+
+**Requires:** Authenticated user
+
+**Request Body:**
+
+```json
+{
+  "videoPosition": 120,
+  "completed": true
+}
+```
+
+Recalculates overall enrollment progress percentage.
+
+## Upload API
+
+### Get Cloudinary Signature
+
+```http
+POST /api/upload/signature
+```
+
+**Requires:** Authenticated user
+
+Returns a signed upload URL for client-side Cloudinary uploads.
+
+## Wishlist API
+
+### Add / Remove from Wishlist
+
+```http
+POST   /api/wishlist   # Add course to wishlist
+DELETE /api/wishlist   # Remove course from wishlist
+```
+
+**Requires:** Authenticated user
+
+**Request Body:**
+
+```json
+{
+  "courseId": "clx..."
+}
+```
+
+## Certificates API
+
+### Generate Certificate
+
+```http
+POST /api/certificates/generate
+```
+
+**Requires:** Authenticated user with 100% course completion
+
+### Download Certificate
+
+```http
+GET /api/certificates/:id/download
+```
+
+## Invoices API
+
+### Get Invoice
+
+```http
+GET /api/invoices/:id
+```
+
+**Requires:** Authenticated user (own invoice)
+
 ## Webhooks
 
 ### Stripe Webhook

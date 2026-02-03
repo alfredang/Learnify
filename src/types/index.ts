@@ -7,6 +7,7 @@ import type {
   Review,
   Category,
   Purchase,
+  InstructorApplication,
 } from "@prisma/client"
 
 export type CourseWithInstructor = Course & {
@@ -85,7 +86,48 @@ export interface CourseFilters {
   page?: number
 }
 
+export type WishlistCourse = {
+  id: string
+  createdAt: Date
+  course: CourseWithInstructor
+}
+
+export type CartItemCourse = {
+  id: string
+  createdAt: Date
+  course: CourseWithInstructor
+}
+
+export type ApplicationWithUser = InstructorApplication & {
+  user: Pick<User, "id" | "name" | "email" | "image">
+  reviewedBy?: Pick<User, "id" | "name"> | null
+}
+
 export interface ApiError {
   message: string
   code?: string
+}
+
+// Quiz Builder Types
+export type QuizQuestionType = "multiple_choice" | "multiple_select" | "open_ended"
+
+export interface QuizOption {
+  id: string
+  text: string
+  isCorrect: boolean
+}
+
+export interface QuizQuestion {
+  id: string
+  type: QuizQuestionType
+  text: string
+  options: QuizOption[]
+  explanation?: string
+  points: number
+}
+
+export interface QuizData {
+  version: 1
+  passingScore?: number
+  questions: QuizQuestion[]
 }

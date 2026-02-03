@@ -3,6 +3,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { formatPrice } from "@/lib/stripe"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -119,7 +120,7 @@ export default async function InstructorCoursesPage() {
                   <TableCell>
                     {course.isFree
                       ? "Free"
-                      : `$${Number(course.price).toFixed(2)}`}
+                      : formatPrice(Number(course.price))}
                   </TableCell>
                   <TableCell>{course._count.enrollments}</TableCell>
                   <TableCell>

@@ -4,7 +4,7 @@ Learnify is built with modern, production-ready technologies.
 
 ## Frontend
 
-### Next.js 15
+### Next.js 16
 
 The React framework for production:
 
@@ -47,11 +47,33 @@ Utility-first CSS framework:
 
 ### shadcn/ui
 
-Beautiful, accessible components:
+Beautiful, accessible components (23 in `src/components/ui/`):
 
 - Built on Radix UI
 - Fully customizable
 - Copy-paste components
+
+### TipTap
+
+Rich text editor for course descriptions:
+
+- `@tiptap/react` + `@tiptap/starter-kit`
+- Bold, italic, headings, lists, horizontal rules
+- Placeholder extension for empty states
+
+### dnd-kit
+
+Drag-and-drop for content reordering:
+
+- `@dnd-kit/core` + `@dnd-kit/sortable`
+- Used in `CourseContentEditor` for section/lecture reordering
+- Persisted via dedicated `/reorder` API endpoints
+
+### Form & Validation
+
+- **React Hook Form** (7.71.1) - Form state management with `zodResolver`
+- **Zod** (4.3.6) - Runtime schema validation for API inputs and forms
+- **TanStack React Query** (5.90.20) - Server state caching (staleTime: 60s)
 
 ## Backend
 
@@ -60,11 +82,29 @@ Beautiful, accessible components:
 RESTful API endpoints:
 
 ```
-GET    /api/courses         # List courses
-GET    /api/courses/:id     # Get course
-POST   /api/courses         # Create course
-PUT    /api/courses/:id     # Update course
-DELETE /api/courses/:id     # Delete course
+GET    /api/courses                          # List courses
+POST   /api/courses                          # Create course
+GET    /api/courses/:id                      # Get course
+PUT    /api/courses/:id                      # Update course
+DELETE /api/courses/:id                      # Delete course
+POST   /api/courses/:id/sections             # Create section
+PUT    /api/courses/:id/sections/reorder     # Reorder sections
+PUT    /api/courses/:id/sections/:sId        # Update section
+DELETE /api/courses/:id/sections/:sId        # Delete section
+POST   /api/courses/:id/sections/:sId/lectures          # Create lecture
+PUT    /api/courses/:id/sections/:sId/lectures/reorder   # Reorder lectures
+PUT    /api/courses/:id/sections/:sId/lectures/:lId      # Update lecture
+DELETE /api/courses/:id/sections/:sId/lectures/:lId      # Delete lecture
+POST   /api/lectures/:id/progress            # Update lecture progress
+GET    /api/categories                       # List categories
+POST   /api/checkout                         # Stripe checkout
+POST   /api/webhooks/stripe                  # Stripe webhooks
+POST   /api/upload/signature                 # Cloudinary upload signature
+POST   /api/wishlist                         # Add to wishlist
+DELETE /api/wishlist                         # Remove from wishlist
+POST   /api/certificates/generate            # Generate certificate
+GET    /api/certificates/:id/download        # Download certificate
+GET    /api/invoices/:id                     # Get invoice
 ```
 
 ### Server Actions
@@ -131,11 +171,21 @@ Media management:
 - Adaptive streaming
 - Global CDN
 
+### Cloudinary
+
+Media management:
+
+- Video upload and storage via signed uploads
+- Automatic transcoding
+- Adaptive streaming
+- Global CDN delivery
+- `next-cloudinary` (6.17.5) for React components
+
 ## Development Tools
 
 | Tool | Purpose |
 |------|---------|
 | ESLint | Code linting |
-| Prettier | Code formatting |
 | Prisma Studio | Database GUI |
 | TypeScript | Type checking |
+| tsx | TypeScript execution (seed scripts) |

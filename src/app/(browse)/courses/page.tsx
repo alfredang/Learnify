@@ -1,5 +1,8 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
+import { getWishlistedCourseIds } from "@/lib/wishlist"
+import { getCartItemCourseIds } from "@/lib/cart"
 import { CourseGrid } from "@/components/courses/course-grid"
 import { CourseFiltersWrapper } from "@/components/courses/course-filters-wrapper"
 import { EmptyState } from "@/components/shared/empty-state"
@@ -139,8 +142,12 @@ async function getCategories() {
 }
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
-  const [{ courses, total, totalPages, currentPage }, categories] =
-    await Promise.all([getCourses(searchParams), getCategories()])
+  const [{ courses, total, totalPages, currentPage }, categories, session] =
+    await Promise.all([getCourses(searchParams), getCategories(), auth()])
+  const [wishlistedCourseIds, cartCourseIds] = await Promise.all([
+    getWishlistedCourseIds(session?.user?.id),
+    getCartItemCourseIds(session?.user?.id),
+  ])
 
   const params = await searchParams
 
@@ -159,7 +166,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 
       {courses.length > 0 ? (
         <>
-          <CourseGrid courses={courses} />
+          <CourseGrid courses={courses} wishlistedCourseIds={wishlistedCourseIds} cartCourseIds={cartCourseIds} />
 
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-8">

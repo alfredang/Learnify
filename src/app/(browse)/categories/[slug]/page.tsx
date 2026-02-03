@@ -2,6 +2,9 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
+import { getWishlistedCourseIds } from "@/lib/wishlist"
+import { getCartItemCourseIds } from "@/lib/cart"
 import { CourseGrid } from "@/components/courses/course-grid"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, BookOpen } from "lucide-react"
@@ -63,11 +66,16 @@ export async function generateMetadata({
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params
-  const category = await getCategory(slug)
+  const [category, session] = await Promise.all([getCategory(slug), auth()])
 
   if (!category) {
     notFound()
   }
+
+  const [wishlistedCourseIds, cartCourseIds] = await Promise.all([
+    getWishlistedCourseIds(session?.user?.id),
+    getCartItemCourseIds(session?.user?.id),
+  ])
 
   return (
     <div className="py-12 md:py-16">
@@ -94,7 +102,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </div>
 
         {category.courses.length > 0 ? (
-          <CourseGrid courses={category.courses} />
+          <CourseGrid courses={category.courses} wishlistedCourseIds={wishlistedCourseIds} cartCourseIds={cartCourseIds} />
         ) : (
           <div className="text-center py-12">
             <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

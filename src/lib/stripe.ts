@@ -1,12 +1,20 @@
 import Stripe from "stripe"
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-01-28.clover",
-  typescript: true,
-})
+let _stripe: Stripe | null = null
+
+export function getStripe() {
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-01-28.clover",
+      typescript: true,
+    })
+  }
+  return _stripe
+}
 
 interface CreateCheckoutSessionParams {
   courseId: string
+  courseSlug: string
   courseName: string
   coursePrice: number
   courseImage?: string
@@ -16,13 +24,14 @@ interface CreateCheckoutSessionParams {
 
 export async function createCheckoutSession({
   courseId,
+  courseSlug,
   courseName,
   coursePrice,
   courseImage,
   userId,
   userEmail,
 }: CreateCheckoutSessionParams) {
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
     customer_email: userEmail,
@@ -34,7 +43,7 @@ export async function createCheckoutSession({
             name: courseName,
             images: courseImage ? [courseImage] : [],
           },
-          unit_amount: coursePrice,
+          unit_amount: Math.round(coursePrice * 100),
         },
         quantity: 1,
       },
@@ -43,18 +52,65 @@ export async function createCheckoutSession({
       courseId,
       userId,
     },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseId}/enroll?success=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseId}?canceled=true`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseSlug}?canceled=true`,
   })
 
   return session
 }
 
-export function formatPrice(priceInCents: number): string {
+interface CartCheckoutItem {
+  courseId: string
+  courseName: string
+  coursePrice: number
+  courseImage?: string
+}
+
+interface CreateCartCheckoutSessionParams {
+  items: CartCheckoutItem[]
+  userId: string
+  userEmail: string
+}
+
+export async function createCartCheckoutSession({
+  items,
+  userId,
+  userEmail,
+}: CreateCartCheckoutSessionParams) {
+  const line_items = items.map((item) => ({
+    price_data: {
+      currency: "usd",
+      product_data: {
+        name: item.courseName,
+        images: item.courseImage ? [item.courseImage] : [],
+      },
+      unit_amount: Math.round(item.coursePrice * 100),
+    },
+    quantity: 1,
+  }))
+
+  const session = await getStripe().checkout.sessions.create({
+    mode: "payment",
+    payment_method_types: ["card"],
+    customer_email: userEmail,
+    line_items,
+    metadata: {
+      courseIds: items.map((i) => i.courseId).join(","),
+      userId,
+      cartCheckout: "true",
+    },
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart?canceled=true`,
+  })
+
+  return session
+}
+
+export function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(priceInCents / 100)
+  }).format(price)
 }
 
 export function calculatePlatformFee(amount: number): number {

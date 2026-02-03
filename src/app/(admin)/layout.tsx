@@ -9,11 +9,13 @@ import {
   DollarSign,
   BarChart3,
   Settings,
+  ClipboardList,
 } from "lucide-react"
 
 const sidebarItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/users", icon: Users, label: "Users" },
+  { href: "/admin/applications", icon: ClipboardList, label: "Applications" },
   { href: "/admin/courses", icon: BookOpen, label: "Courses" },
   { href: "/admin/categories", icon: Folder, label: "Categories" },
   { href: "/admin/payouts", icon: DollarSign, label: "Payouts" },

@@ -46,8 +46,12 @@ model User {
   progress     LectureProgress[]
   reviews      Review[]
   wishlist     Wishlist[]
+  cartItems    CartItem[]
   purchases    Purchase[]
   certificates Certificate[]
+
+  instructorApplications InstructorApplication[]
+  reviewedApplications   InstructorApplication[] @relation("ReviewedApplications")
 
   @@index([email])
   @@index([role])
@@ -99,6 +103,35 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// ==================== INSTRUCTOR APPLICATIONS ====================
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model InstructorApplication {
+  id        String            @id @default(cuid())
+  headline  String
+  bio       String            @db.Text
+  status    ApplicationStatus @default(PENDING)
+  adminNote String?           @db.Text
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reviewedAt DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reviewedById String?
+  reviewedBy   User?  @relation("ReviewedApplications", fields: [reviewedById], references: [id])
+
+  @@index([userId])
+  @@index([status])
 }
 
 // ==================== COURSE STRUCTURE ====================
@@ -180,6 +213,7 @@ model Course {
   enrollments Enrollment[]
   reviews     Review[]
   wishlist    Wishlist[]
+  cartItems   CartItem[]
   purchases   Purchase[]
 
   @@index([slug])
@@ -348,6 +382,22 @@ model Review {
 // ==================== WISHLIST ====================
 
 model Wishlist {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+// ==================== CART ====================
+
+model CartItem {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 

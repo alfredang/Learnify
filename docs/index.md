@@ -107,10 +107,19 @@
 | Route | Role | Description |
 |-------|------|-------------|
 | `/my-courses` | Student | Enrolled courses |
-| `/my-courses/[id]` | Student | Course player |
+| `/my-courses/[id]` | Student | Course overview |
+| `/my-courses/[id]/lectures/[id]` | Student | Lecture viewer (video, quiz) |
+| `/wishlist` | Student | Saved courses |
+| `/account` | Student | Account settings |
+| `/account/invoices` | Student | Invoice history |
+| `/account/purchases` | Student | Purchase history |
+| `/certificates` | Student | Completion certificates |
+| `/messages` | Student | Messages |
+| `/notifications` | Student | Notifications |
 | `/instructor` | Instructor | Dashboard |
 | `/instructor/courses` | Instructor | Manage courses |
 | `/instructor/courses/new` | Instructor | Create course |
+| `/instructor/courses/[id]` | Instructor | Edit course |
 | `/admin` | Admin | Admin dashboard |
 | `/admin/users` | Admin | User management |
 | `/admin/courses` | Admin | Course management |
@@ -121,11 +130,26 @@
 |----------|--------|-------------|
 | `/api/auth/[...nextauth]` | ALL | Authentication |
 | `/api/auth/register` | POST | User registration |
+| `/api/categories` | GET | List categories |
 | `/api/courses` | GET | List courses |
 | `/api/courses` | POST | Create course |
-| `/api/categories` | GET | List categories |
-| `/api/checkout` | POST | Create checkout |
+| `/api/courses/[id]` | GET | Get course details |
+| `/api/courses/[id]` | PUT | Update course |
+| `/api/courses/[id]` | DELETE | Delete course |
+| `/api/courses/[id]/sections` | POST | Create section |
+| `/api/courses/[id]/sections/reorder` | PUT | Reorder sections |
+| `/api/courses/[id]/sections/[sId]` | PUT/DELETE | Update/delete section |
+| `/api/courses/[id]/sections/[sId]/lectures` | POST | Create lecture |
+| `/api/courses/[id]/sections/[sId]/lectures/reorder` | PUT | Reorder lectures |
+| `/api/courses/[id]/sections/[sId]/lectures/[lId]` | PUT/DELETE | Update/delete lecture |
+| `/api/lectures/[id]/progress` | POST | Update lecture progress |
+| `/api/checkout` | POST | Create Stripe checkout |
 | `/api/webhooks/stripe` | POST | Stripe webhooks |
+| `/api/upload/signature` | POST | Cloudinary upload signature |
+| `/api/wishlist` | POST/DELETE | Add/remove wishlist |
+| `/api/certificates/generate` | POST | Generate certificate |
+| `/api/certificates/[id]/download` | GET | Download certificate |
+| `/api/invoices/[id]` | GET | Get invoice details |
 
 ## Quick Start
 
@@ -195,12 +219,16 @@ After seeding the database, use these accounts:
 | **Course** | Courses with title, description, price |
 | **Category** | Course categories |
 | **Section** | Course sections/modules |
-| **Lecture** | Video lectures |
+| **Lecture** | Lectures (VIDEO, TEXT, QUIZ types) |
+| **Resource** | Lecture resources/files |
 | **Enrollment** | Student enrollments |
-| **Review** | Course reviews |
+| **LectureProgress** | Per-lecture progress tracking |
+| **Review** | Course reviews and ratings |
 | **Purchase** | Payment records |
+| **Earning** | Instructor earnings and payouts |
 | **Certificate** | Completion certificates |
 | **Wishlist** | Saved courses |
+| **PlatformSettings** | Configurable platform fees |
 
 ## Project Structure
 

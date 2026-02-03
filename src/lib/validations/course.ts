@@ -33,11 +33,12 @@ export const lectureSchema = z.object({
     .string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   type: z.enum(["VIDEO", "TEXT", "QUIZ"]),
-  content: z.string().optional(),
-  videoUrl: z.string().url().optional().or(z.literal("")),
-  videoDuration: z.number().optional(),
+  content: z.string().nullish(),
+  videoUrl: z.string().nullish(),
+  videoPublicId: z.string().nullish(),
+  videoDuration: z.coerce.number().nullish(),
   isFreePreview: z.boolean().default(false),
 })
 
@@ -46,7 +47,67 @@ export const reviewSchema = z.object({
   comment: z.string().max(1000, "Review must be less than 1000 characters").optional(),
 })
 
+export const quizOptionSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1, "Option text is required"),
+  isCorrect: z.boolean(),
+})
+
+export const quizQuestionSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.enum(["multiple_choice", "multiple_select", "open_ended"]),
+    text: z.string().min(1, "Question text is required"),
+    options: z.array(quizOptionSchema),
+    explanation: z.string().optional(),
+    points: z.number().min(1).default(1),
+  })
+  .superRefine((question, ctx) => {
+    if (question.type === "multiple_choice") {
+      if (question.options.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Multiple choice must have at least 2 options",
+          path: ["options"],
+        })
+      }
+      const correctCount = question.options.filter((o) => o.isCorrect).length
+      if (correctCount !== 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Multiple choice must have exactly 1 correct answer",
+          path: ["options"],
+        })
+      }
+    }
+    if (question.type === "multiple_select") {
+      if (question.options.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Multiple select must have at least 2 options",
+          path: ["options"],
+        })
+      }
+      if (!question.options.some((o) => o.isCorrect)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Multiple select must have at least 1 correct answer",
+          path: ["options"],
+        })
+      }
+    }
+  })
+
+export const quizDataSchema = z.object({
+  version: z.literal(1),
+  passingScore: z.number().min(0).max(100).optional(),
+  questions: z
+    .array(quizQuestionSchema)
+    .min(1, "Quiz must have at least 1 question"),
+})
+
 export type CourseInput = z.infer<typeof courseSchema>
 export type SectionInput = z.infer<typeof sectionSchema>
 export type LectureInput = z.infer<typeof lectureSchema>
 export type ReviewInput = z.infer<typeof reviewSchema>
+export type QuizDataInput = z.infer<typeof quizDataSchema>

@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Search, Menu, ShoppingCart, Heart } from "lucide-react"
+import { Search, Menu, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { UserMenu } from "./user-menu"
 import { MobileNav } from "./mobile-nav"
+import { CartDropdown } from "./cart-dropdown"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -48,7 +49,11 @@ export function Header() {
         </Sheet>
 
         {/* Logo */}
-        <Link href="/" className="mr-6 flex items-center space-x-2">
+        <Link href="/" className="mr-6 flex items-center gap-2">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+            <circle cx="14" cy="14" r="14" className="fill-foreground" />
+            <path d="M8.5 19L14 7.5L19.5 19H8.5Z" className="fill-background" />
+          </svg>
           <span className="font-bold text-xl">Learnify</span>
         </Link>
 
@@ -117,12 +122,7 @@ export function Header() {
                   <span className="sr-only">Wishlist</span>
                 </Link>
               </Button>
-              <Button variant="ghost" size="icon" asChild>
-                <Link href="/my-courses">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="sr-only">My Courses</span>
-                </Link>
-              </Button>
+              <CartDropdown />
               <UserMenu user={user} />
             </>
           ) : (

@@ -40,13 +40,15 @@ export default auth((req) => {
   )
 
   // Check route types
-  const isStudentRoute = studentRoutes.some((route) =>
-    pathname.startsWith(route)
+  const isStudentRoute = studentRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
   )
-  const isInstructorRoute = instructorRoutes.some((route) =>
-    pathname.startsWith(route)
+  const isInstructorRoute = instructorRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
   )
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route))
+  const isAdminRoute = adminRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
 
   // Allow API routes and static files
   if (
