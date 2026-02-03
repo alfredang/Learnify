@@ -239,9 +239,12 @@ function CartItemCard({ item, onRemove }: CartItemCardProps) {
                     {course.title}
                   </h3>
                 </Link>
-                <p className="text-sm text-muted-foreground mt-1">
+                <Link
+                  href={`/instructors/${course.instructor.id}`}
+                  className="text-sm text-muted-foreground mt-1 hover:text-primary hover:underline inline-block"
+                >
                   {course.instructor.name}
-                </p>
+                </Link>
                 <div className="flex items-center gap-2 mt-1">
                   <StarRating rating={rating} size="sm" showValue />
                   <span className="text-sm text-muted-foreground">

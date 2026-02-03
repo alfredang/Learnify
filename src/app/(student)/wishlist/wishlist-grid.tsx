@@ -105,9 +105,12 @@ function WishlistCard({ item, isEnrolled, isInCart, onRemove }: WishlistCardProp
             {course.title}
           </h3>
         </Link>
-        <p className="text-sm text-muted-foreground">
+        <Link
+          href={`/instructors/${course.instructor.id}`}
+          className="text-sm text-muted-foreground hover:text-primary hover:underline inline-block"
+        >
           {course.instructor.name}
-        </p>
+        </Link>
         <div className="flex items-center gap-2">
           <StarRating rating={rating} size="sm" showValue />
           <span className="text-sm text-muted-foreground">
