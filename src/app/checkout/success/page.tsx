@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { CheckCircle, Loader2, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,22 @@ import Link from "next/link"
 type VerifyState = "loading" | "success" | "error"
 
 export default function CheckoutSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <h1 className="text-2xl font-bold">Processing your payment...</h1>
+          <p className="text-muted-foreground">Please wait while we confirm your purchase.</p>
+        </div>
+      }
+    >
+      <CheckoutSuccessContent />
+    </Suspense>
+  )
+}
+
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const sessionId = searchParams.get("session_id")
