@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { courseSchema, type CourseInput } from "@/lib/validations/course"
 import { COURSE_LEVELS } from "@/lib/constants"
+import { CourseContentEditor } from "@/components/courses/course-content-editor"
 
 async function fetchCourse(id: string) {
   const res = await fetch(`/api/courses/${id}`)
@@ -472,25 +473,12 @@ export default function CourseEditorPage() {
           </Card>
         </TabsContent>
 
-        {/* Content Tab — placeholder for Chunk 5 */}
+        {/* Content Tab */}
         <TabsContent value="content">
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">
-                  Section & lecture management coming soon
-                </p>
-                <p className="text-sm mt-1">
-                  You&apos;ll be able to add sections, lectures, and upload
-                  videos here.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <CourseContentEditor
+            courseId={courseId}
+            sections={course.sections || []}
+          />
         </TabsContent>
       </Tabs>
     </div>

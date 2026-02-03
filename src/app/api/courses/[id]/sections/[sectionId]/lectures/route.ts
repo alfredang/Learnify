@@ -81,7 +81,7 @@ export async function POST(
         content: validated.data.content,
         videoUrl: validated.data.videoUrl || null,
         videoDuration: validated.data.videoDuration || null,
-        videoPublicId: body.videoPublicId || null,
+        videoPublicId: validated.data.videoPublicId || null,
         isFreePreview: validated.data.isFreePreview,
         sectionId,
         position: (lastLecture?.position ?? -1) + 1,

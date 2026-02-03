@@ -33,11 +33,12 @@ export const lectureSchema = z.object({
     .string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   type: z.enum(["VIDEO", "TEXT", "QUIZ"]),
-  content: z.string().optional(),
-  videoUrl: z.string().url().optional().or(z.literal("")),
-  videoDuration: z.number().optional(),
+  content: z.string().nullish(),
+  videoUrl: z.string().nullish(),
+  videoPublicId: z.string().nullish(),
+  videoDuration: z.coerce.number().nullish(),
   isFreePreview: z.boolean().default(false),
 })
 

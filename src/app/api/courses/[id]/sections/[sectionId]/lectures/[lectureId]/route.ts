@@ -61,9 +61,9 @@ export async function PUT(
 
     // If video is being replaced, delete the old one from Cloudinary
     if (
-      body.videoPublicId &&
+      validated.data.videoPublicId &&
       existingLecture.videoPublicId &&
-      body.videoPublicId !== existingLecture.videoPublicId
+      validated.data.videoPublicId !== existingLecture.videoPublicId
     ) {
       try {
         await deleteAsset(existingLecture.videoPublicId, "video")
@@ -87,8 +87,8 @@ export async function PUT(
         ...(validated.data.videoDuration !== undefined && {
           videoDuration: validated.data.videoDuration || null,
         }),
-        ...(body.videoPublicId !== undefined && {
-          videoPublicId: body.videoPublicId || null,
+        ...(validated.data.videoPublicId !== undefined && {
+          videoPublicId: validated.data.videoPublicId || null,
         }),
         ...(validated.data.isFreePreview !== undefined && {
           isFreePreview: validated.data.isFreePreview,

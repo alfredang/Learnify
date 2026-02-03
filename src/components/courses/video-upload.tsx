@@ -101,7 +101,8 @@ export function VideoUpload({
       // Get signed upload params
       const sigRes = await fetch("/api/upload/signature")
       if (!sigRes.ok) {
-        throw new Error("Failed to get upload signature")
+        const sigErr = await sigRes.json().catch(() => ({}))
+        throw new Error(sigErr.error || `Signature request failed (${sigRes.status})`)
       }
       const { timestamp, signature, cloudName, apiKey } = await sigRes.json()
 
@@ -136,11 +137,17 @@ export function VideoUpload({
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve(JSON.parse(xhr.responseText))
           } else {
-            reject(new Error("Upload failed"))
+            try {
+              const errBody = JSON.parse(xhr.responseText)
+              const msg = errBody?.error?.message || `Upload failed (${xhr.status})`
+              reject(new Error(msg))
+            } catch {
+              reject(new Error(`Upload failed with status ${xhr.status}`))
+            }
           }
         })
 
-        xhr.addEventListener("error", () => reject(new Error("Upload failed")))
+        xhr.addEventListener("error", () => reject(new Error("Network error during upload")))
         xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")))
 
         xhr.open(
