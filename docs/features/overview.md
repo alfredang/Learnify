@@ -6,12 +6,14 @@ Learnify is a comprehensive online learning platform with features for students,
 
 ### Modern Tech Stack
 
-- **Next.js 15** with App Router for optimal performance
+- **Next.js 16** with App Router for optimal performance
 - **TypeScript** for type safety
 - **Tailwind CSS** + **shadcn/ui** for beautiful UI
 - **Prisma** ORM with **PostgreSQL**
 - **Stripe** for secure payments
 - **Cloudinary** for media management
+- **TipTap** for rich text editing
+- **dnd-kit** for drag-and-drop reordering
 
 ### Role-Based Access
 

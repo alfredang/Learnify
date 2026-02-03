@@ -21,7 +21,8 @@ Instructors can create rich, multimedia courses:
 
 3. **Content Types**
    - Video lectures (via Cloudinary)
-   - Text content with rich formatting
+   - Text content with rich formatting (TipTap editor)
+   - Quizzes (multiple choice, multiple select, open-ended)
    - Downloadable resources
 
 ### Pricing Options

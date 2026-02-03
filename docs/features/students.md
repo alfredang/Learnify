@@ -31,21 +31,29 @@ Each course page includes:
 - Progress tracking - resume where you left off
 - Keyboard shortcuts for navigation
 
+### Quizzes
+
+- Multiple choice and multiple select questions
+- Automatic grading with score display
+- Open-ended questions (not auto-graded)
+- Retry support with configurable passing scores
+
 ### Progress Tracking
 
 ```mermaid
 graph LR
     A[Start Course] --> B[Watch Lectures]
-    B --> C[Complete Sections]
-    C --> D[Finish Course]
-    D --> E[Earn Certificate]
+    B --> C[Take Quizzes]
+    C --> D[Complete Sections]
+    D --> E[Finish Course]
+    E --> F[Earn Certificate]
 ```
 
 Students can:
 
 - See overall course completion percentage
 - Track individual lecture completion
-- Resume from last watched lecture
+- Resume from last watched lecture (video position saved)
 - View learning history
 
 ## Course Management

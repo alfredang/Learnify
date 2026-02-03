@@ -22,11 +22,15 @@ Learnify is a Udemy-clone online learning marketplace where instructors create a
 | NextAuth.js | 5.0.0-beta.30 | Auth (Credentials, Google, GitHub OAuth) |
 | Stripe | 20.3.0 | Payments (Checkout Sessions, Webhooks) |
 | Cloudinary | 2.9.0 | Video/image upload and CDN |
-| shadcn/ui | Radix-based | UI component library (42+ components in `src/components/ui/`) |
+| shadcn/ui | Radix-based | UI component library (23 components in `src/components/ui/`) |
 | React Hook Form | 7.71.1 | Form management |
 | Zod | 4.3.6 | Schema validation |
 | TanStack React Query | 5.90.20 | Server state / data fetching |
-| Zustand | 5.0.10 | Client state management |
+| Zustand | 5.0.10 | Client state management (installed, not yet actively used) |
+| TipTap | 3.18.0 | Rich text editor (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`) |
+| dnd-kit | 6.3.1 / 10.0.0 | Drag & drop for section/lecture reordering (`@dnd-kit/core`, `@dnd-kit/sortable`) |
+| next-cloudinary | 6.17.5 | Cloudinary React components |
+| next-themes | 0.4.6 | Theme support |
 | Lucide React | 0.563.0 | Icons |
 | Sonner | 2.0.7 | Toast notifications |
 | date-fns | 4.1.0 | Date formatting |
@@ -113,10 +117,10 @@ learnify/
 │   │   └── api/                   # API routes (REST endpoints)
 │   ├── components/
 │   │   ├── auth/                  # LoginForm, RegisterForm, SocialButtons
-│   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters, VideoPlayer, LectureSidebar, QuizPlayer, QuizBuilder, VideoUpload
+│   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters, CourseFiltersWrapper, CourseContentEditor, VideoPlayer, VideoUpload, LectureSidebar, MobileBottomBar, QuizPlayer, QuizBuilder, WishlistButton
 │   │   ├── layout/                # Header, Footer, MobileNav, UserMenu
-│   │   ├── shared/                # EmptyState, LoadingSpinner, StarRating
-│   │   └── ui/                    # 42+ shadcn/ui components (Radix-based)
+│   │   ├── shared/                # EmptyState, LoadingSpinner, StarRating, RichTextEditor
+│   │   └── ui/                    # 23 shadcn/ui components (Radix-based)
 │   ├── hooks/                     # use-auth.ts, use-debounce.ts
 │   ├── lib/
 │   │   ├── auth.ts                # NextAuth config (Google, GitHub, Credentials)
@@ -125,6 +129,7 @@ learnify/
 │   │   ├── cloudinary.ts          # Cloudinary helpers (upload, delete, thumbnails)
 │   │   ├── utils.ts               # cn() - Tailwind class merger
 │   │   ├── constants.ts           # App constants (categories, filters, ITEMS_PER_PAGE)
+│   │   ├── wishlist.ts            # Wishlist helper (getWishlistedCourseIds)
 │   │   └── validations/           # Zod schemas: auth.ts, course.ts, user.ts
 │   ├── providers/                 # AuthProvider, QueryProvider, composite Providers
 │   ├── types/                     # TypeScript types (index.ts)
@@ -160,9 +165,9 @@ External Services:
 
 | Group | Path Prefix | Layout | Auth Required |
 |---|---|---|---|
-| `(auth)` | `/login`, `/register` | Centered fullscreen | No (redirects away if logged in) |
-| `(browse)` | `/courses`, `/categories`, `/search`, `/about` | Default (Header + Footer) | No |
-| `(student)` | `/my-courses`, `/account`, `/certificates` | Default | Yes (any role) |
+| `(auth)` | `/login`, `/register`, `/forgot-password` | Centered fullscreen | No (redirects away if logged in) |
+| `(browse)` | `/courses`, `/categories`, `/search`, `/about`, `/become-instructor` | Default (Header + Footer) | No |
+| `(student)` | `/my-courses`, `/wishlist`, `/account`, `/certificates`, `/messages`, `/notifications` | Default | Yes (any role) |
 | `(instructor)` | `/instructor/*` | Sidebar layout | Yes (INSTRUCTOR or ADMIN) |
 | `(admin)` | `/admin/*` | Sidebar layout | Yes (ADMIN only) |
 
@@ -172,15 +177,26 @@ External Services:
 |---|---|---|---|
 | `/api/auth/[...nextauth]` | ALL | - | NextAuth handler |
 | `/api/auth/register` | POST | No | User registration (bcrypt) |
+| `/api/categories` | GET | No | List categories |
 | `/api/courses` | GET | No | List/search courses with filters |
 | `/api/courses` | POST | Instructor/Admin | Create course |
-| `/api/categories` | GET | No | List categories |
+| `/api/courses/[id]` | GET | No | Get course details |
+| `/api/courses/[id]` | PUT | Instructor/Admin | Update course |
+| `/api/courses/[id]` | DELETE | Instructor/Admin | Delete course |
+| `/api/courses/[id]/sections` | POST | Instructor/Admin | Create section |
+| `/api/courses/[id]/sections/reorder` | PUT | Instructor/Admin | Reorder sections (drag & drop) |
+| `/api/courses/[id]/sections/[sectionId]` | PUT/DELETE | Instructor/Admin | Update or delete section |
+| `/api/courses/[id]/sections/[sectionId]/lectures` | POST | Instructor/Admin | Create lecture |
+| `/api/courses/[id]/sections/[sectionId]/lectures/reorder` | PUT | Instructor/Admin | Reorder lectures (drag & drop) |
+| `/api/courses/[id]/sections/[sectionId]/lectures/[lectureId]` | PUT/DELETE | Instructor/Admin | Update or delete lecture |
+| `/api/lectures/[lectureId]/progress` | POST | Yes | Update lecture progress (position, completion) |
 | `/api/checkout` | POST | Yes | Create Stripe checkout session |
 | `/api/webhooks/stripe` | POST | Stripe signature | Handle payment events |
+| `/api/upload/signature` | POST | Yes | Get Cloudinary upload signature |
 | `/api/certificates/generate` | POST | Yes | Generate completion certificate |
 | `/api/certificates/[id]/download` | GET | Yes | Download certificate |
 | `/api/invoices/[id]` | GET | Yes | Get invoice details |
-| `/api/lectures/[lectureId]/progress` | POST | Yes | Update lecture progress (position, completion) |
+| `/api/wishlist` | POST/DELETE | Yes | Add/remove course from wishlist |
 
 ### Database Models
 
@@ -274,6 +290,9 @@ Key models in `prisma/schema.prisma`:
 10. **Cloudinary public IDs** are stored in `videoPublicId` on Lecture model for deletion/management.
 11. **Lecture viewer** at `/my-courses/[courseId]/lectures/[lectureId]` uses a server page (`page.tsx`) that fetches data and passes serialized props to a client `LectureViewer` component. Progress is saved via `POST /api/lectures/[lectureId]/progress` which also recalculates enrollment percentage.
 12. **Quiz data** is stored as JSON in `Lecture.content` using the `QuizData` type (version 1). The `QuizPlayer` component parses, renders, grades, and supports retries. Open-ended questions are not auto-graded.
+13. **TipTap rich text editor** is used for course descriptions via `src/components/shared/rich-text-editor.tsx`. It uses `@tiptap/starter-kit` with placeholder extension. Output is HTML stored in the course `description` field.
+14. **dnd-kit** is used for drag-and-drop reordering of sections and lectures in `CourseContentEditor`. Uses `@dnd-kit/core` + `@dnd-kit/sortable`. Reorder is persisted via dedicated `/reorder` API endpoints.
+15. **Wishlist** uses a dedicated API route (`/api/wishlist`) and helper (`src/lib/wishlist.ts`). The `WishlistButton` component handles optimistic UI toggling across pages.
 
 ---
 
