@@ -6,15 +6,24 @@ import { StarRating } from "@/components/shared/star-rating"
 import { Users } from "lucide-react"
 import { formatPrice } from "@/lib/stripe"
 import { WishlistButton } from "@/components/courses/wishlist-button"
+import { AddToCartButton } from "@/components/courses/add-to-cart-button"
 import type { CourseWithInstructor } from "@/types"
 
 interface CourseCardProps {
   course: CourseWithInstructor
   isWishlisted?: boolean
+  isInCart?: boolean
   showWishlist?: boolean
+  showCartButton?: boolean
 }
 
-export function CourseCard({ course, isWishlisted, showWishlist = true }: CourseCardProps) {
+export function CourseCard({
+  course,
+  isWishlisted,
+  isInCart,
+  showWishlist = true,
+  showCartButton = true,
+}: CourseCardProps) {
   const price = Number(course.price)
   const discountPrice = course.discountPrice ? Number(course.discountPrice) : null
   const rating = Number(course.averageRating)
@@ -30,11 +39,14 @@ export function CourseCard({ course, isWishlisted, showWishlist = true }: Course
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-          {showWishlist && (
-            <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-2 right-2 z-10 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {showCartButton && !course.isFree && (
+              <AddToCartButton courseId={course.id} initialInCart={isInCart} variant="icon" />
+            )}
+            {showWishlist && (
               <WishlistButton courseId={course.id} initialWishlisted={isWishlisted} />
-            </div>
-          )}
+            )}
+          </div>
           {course.isFree && (
             <Badge className="absolute top-2 left-2 bg-green-500">Free</Badge>
           )}

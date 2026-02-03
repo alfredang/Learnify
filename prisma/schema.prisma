@@ -46,6 +46,7 @@ model User {
   progress     LectureProgress[]
   reviews      Review[]
   wishlist     Wishlist[]
+  cartItems    CartItem[]
   purchases    Purchase[]
   certificates Certificate[]
 
@@ -180,6 +181,7 @@ model Course {
   enrollments Enrollment[]
   reviews     Review[]
   wishlist    Wishlist[]
+  cartItems   CartItem[]
   purchases   Purchase[]
 
   @@index([slug])
@@ -348,6 +350,22 @@ model Review {
 // ==================== WISHLIST ====================
 
 model Wishlist {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+// ==================== CART ====================
+
+model CartItem {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 

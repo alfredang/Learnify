@@ -13,6 +13,8 @@ import { Separator } from "@/components/ui/separator"
 import { StarRating } from "@/components/shared/star-rating"
 import { MobileBottomBar } from "@/components/courses/mobile-bottom-bar"
 import { WishlistButton } from "@/components/courses/wishlist-button"
+import { AddToCartButton } from "@/components/courses/add-to-cart-button"
+import { BuyNowButton } from "@/components/courses/buy-now-button"
 import {
   Play,
   Clock,
@@ -103,6 +105,18 @@ async function checkWishlist(courseId: string, userId?: string) {
   return !!item
 }
 
+async function checkCart(courseId: string, userId?: string) {
+  if (!userId) return false
+
+  const item = await prisma.cartItem.findUnique({
+    where: {
+      userId_courseId: { userId, courseId },
+    },
+  })
+
+  return !!item
+}
+
 export async function generateMetadata({
   params,
 }: CoursePageProps): Promise<Metadata> {
@@ -128,9 +142,10 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   }
 
   const session = await auth()
-  const [isEnrolled, isWishlisted] = await Promise.all([
+  const [isEnrolled, isWishlisted, isInCart] = await Promise.all([
     checkEnrollment(course.id, session?.user?.id),
     checkWishlist(course.id, session?.user?.id),
+    checkCart(course.id, session?.user?.id),
   ])
   const isOwner = session?.user?.id === course.instructorId
 
@@ -205,12 +220,17 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
               Edit Course
             </Link>
           </Button>
+        ) : course.isFree ? (
+          <BuyNowButton courseId={course.id} isFree={true} />
         ) : (
-          <Button className="w-full" size="lg" asChild>
-            <Link href={`/courses/${course.slug}/enroll`}>
-              {course.isFree ? "Enroll for Free" : "Buy Now"}
-            </Link>
-          </Button>
+          <>
+            <AddToCartButton
+              courseId={course.id}
+              initialInCart={isInCart}
+              variant="full"
+            />
+            <BuyNowButton courseId={course.id} isFree={false} />
+          </>
         )}
 
         {!isEnrolled && !isOwner && (
@@ -546,10 +566,11 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
       {/* Mobile Fixed Bottom Bar */}
       {!isEnrolled && !isOwner && (
         <MobileBottomBar
-          courseSlug={course.slug}
+          courseId={course.id}
           price={price}
           discountPrice={discountPrice}
           isFree={course.isFree}
+          isInCart={isInCart}
         />
       )}
     </div>

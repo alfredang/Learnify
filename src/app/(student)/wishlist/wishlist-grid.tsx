@@ -10,16 +10,19 @@ import { EmptyState } from "@/components/shared/empty-state"
 import { Heart, Trash2, Users } from "lucide-react"
 import { formatPrice } from "@/lib/stripe"
 import { toast } from "sonner"
+import { AddToCartButton } from "@/components/courses/add-to-cart-button"
 import type { WishlistCourse } from "@/types"
 
 interface WishlistGridProps {
   initialItems: WishlistCourse[]
   enrolledCourseIds: string[]
+  cartCourseIds?: string[]
 }
 
-export function WishlistGrid({ initialItems, enrolledCourseIds }: WishlistGridProps) {
+export function WishlistGrid({ initialItems, enrolledCourseIds, cartCourseIds = [] }: WishlistGridProps) {
   const [items, setItems] = useState(initialItems)
   const enrolledSet = new Set(enrolledCourseIds)
+  const cartSet = new Set(cartCourseIds)
 
   if (items.length === 0) {
     return (
@@ -40,6 +43,7 @@ export function WishlistGrid({ initialItems, enrolledCourseIds }: WishlistGridPr
           key={item.id}
           item={item}
           isEnrolled={enrolledSet.has(item.course.id)}
+          isInCart={cartSet.has(item.course.id)}
           onRemove={(id) => setItems((prev) => prev.filter((i) => i.id !== id))}
         />
       ))}
@@ -50,10 +54,11 @@ export function WishlistGrid({ initialItems, enrolledCourseIds }: WishlistGridPr
 interface WishlistCardProps {
   item: WishlistCourse
   isEnrolled: boolean
+  isInCart: boolean
   onRemove: (id: string) => void
 }
 
-function WishlistCard({ item, isEnrolled, onRemove }: WishlistCardProps) {
+function WishlistCard({ item, isEnrolled, isInCart, onRemove }: WishlistCardProps) {
   const [isPending, startTransition] = useTransition()
   const course = item.course
   const price = Number(course.price)
@@ -136,12 +141,21 @@ function WishlistCard({ item, isEnrolled, onRemove }: WishlistCardProps) {
                 Continue Learning
               </Link>
             </Button>
-          ) : (
+          ) : course.isFree ? (
             <Button className="flex-1" asChild>
               <Link href={`/courses/${course.slug}/enroll`}>
-                {course.isFree ? "Enroll for Free" : "Enroll Now"}
+                Enroll for Free
               </Link>
             </Button>
+          ) : (
+            <div className="flex-1">
+              <AddToCartButton
+                courseId={course.id}
+                initialInCart={isInCart}
+                variant="full"
+                className="h-9 text-sm"
+              />
+            </div>
           )}
           <Button
             variant="outline"

@@ -52,8 +52,55 @@ export async function createCheckoutSession({
       courseId,
       userId,
     },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseSlug}/enroll?success=true`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseSlug}?canceled=true`,
+  })
+
+  return session
+}
+
+interface CartCheckoutItem {
+  courseId: string
+  courseName: string
+  coursePrice: number
+  courseImage?: string
+}
+
+interface CreateCartCheckoutSessionParams {
+  items: CartCheckoutItem[]
+  userId: string
+  userEmail: string
+}
+
+export async function createCartCheckoutSession({
+  items,
+  userId,
+  userEmail,
+}: CreateCartCheckoutSessionParams) {
+  const line_items = items.map((item) => ({
+    price_data: {
+      currency: "usd",
+      product_data: {
+        name: item.courseName,
+        images: item.courseImage ? [item.courseImage] : [],
+      },
+      unit_amount: Math.round(item.coursePrice * 100),
+    },
+    quantity: 1,
+  }))
+
+  const session = await getStripe().checkout.sessions.create({
+    mode: "payment",
+    payment_method_types: ["card"],
+    customer_email: userEmail,
+    line_items,
+    metadata: {
+      courseIds: items.map((i) => i.courseId).join(","),
+      userId,
+      cartCheckout: "true",
+    },
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart?canceled=true`,
   })
 
   return session

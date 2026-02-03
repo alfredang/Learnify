@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { createCheckoutSession } from "@/lib/stripe"
+import { createCheckoutSession, createCartCheckoutSession } from "@/lib/stripe"
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +11,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const { courseId } = await request.json()
+    const body = await request.json()
+
+    // Cart checkout (multiple courses)
+    if (body.cartCheckout && body.courseIds) {
+      return handleCartCheckout(body.courseIds, session.user.id, session.user.email!)
+    }
+
+    // Single course checkout (existing flow)
+    const { courseId } = body
 
     if (!courseId) {
       return NextResponse.json(
@@ -59,6 +67,11 @@ export async function POST(request: Request) {
         data: { totalStudents: { increment: 1 } },
       })
 
+      // Remove from cart if it was there
+      await prisma.cartItem.deleteMany({
+        where: { userId: session.user.id, courseId },
+      })
+
       return NextResponse.json({
         url: `/my-courses/${courseId}`,
         free: true,
@@ -78,10 +91,108 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: checkoutSession.url })
   } catch (error) {
-    console.error("Checkout error:", error)
+    console.error("[CHECKOUT_POST]", error)
     return NextResponse.json(
       { message: "Failed to create checkout session" },
       { status: 500 }
     )
   }
+}
+
+async function handleCartCheckout(courseIds: string[], userId: string, userEmail: string) {
+  if (!Array.isArray(courseIds) || courseIds.length === 0) {
+    return NextResponse.json(
+      { message: "No courses provided" },
+      { status: 400 }
+    )
+  }
+
+  // Fetch all courses
+  const courses = await prisma.course.findMany({
+    where: {
+      id: { in: courseIds },
+      status: "PUBLISHED",
+    },
+  })
+
+  if (courses.length === 0) {
+    return NextResponse.json(
+      { message: "No valid courses found" },
+      { status: 404 }
+    )
+  }
+
+  // Check for existing enrollments
+  const existingEnrollments = await prisma.enrollment.findMany({
+    where: {
+      userId,
+      courseId: { in: courseIds },
+    },
+    select: { courseId: true },
+  })
+
+  const enrolledIds = new Set(existingEnrollments.map((e) => e.courseId))
+  const unenrolledCourses = courses.filter((c) => !enrolledIds.has(c.id))
+
+  if (unenrolledCourses.length === 0) {
+    return NextResponse.json(
+      { message: "Already enrolled in all selected courses" },
+      { status: 400 }
+    )
+  }
+
+  // Separate free and paid courses
+  const freeCourses = unenrolledCourses.filter((c) => c.isFree)
+  const paidCourses = unenrolledCourses.filter((c) => !c.isFree)
+
+  // Enroll in free courses immediately
+  if (freeCourses.length > 0) {
+    await prisma.$transaction([
+      ...freeCourses.map((course) =>
+        prisma.enrollment.create({
+          data: { userId, courseId: course.id },
+        })
+      ),
+      ...freeCourses.map((course) =>
+        prisma.course.update({
+          where: { id: course.id },
+          data: { totalStudents: { increment: 1 } },
+        })
+      ),
+      // Remove free courses from cart
+      prisma.cartItem.deleteMany({
+        where: {
+          userId,
+          courseId: { in: freeCourses.map((c) => c.id) },
+        },
+      }),
+    ])
+  }
+
+  // If only free courses, no need for Stripe
+  if (paidCourses.length === 0) {
+    // Clear remaining cart items
+    await prisma.cartItem.deleteMany({
+      where: { userId },
+    })
+    return NextResponse.json({ free: true, url: "/my-courses" })
+  }
+
+  // Create Stripe checkout for paid courses
+  const items = paidCourses.map((course) => ({
+    courseId: course.id,
+    courseName: course.title,
+    coursePrice: course.discountPrice
+      ? Number(course.discountPrice)
+      : Number(course.price),
+    courseImage: course.thumbnail || undefined,
+  }))
+
+  const checkoutSession = await createCartCheckoutSession({
+    items,
+    userId,
+    userEmail,
+  })
+
+  return NextResponse.json({ url: checkoutSession.url })
 }

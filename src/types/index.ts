@@ -91,6 +91,12 @@ export type WishlistCourse = {
   course: CourseWithInstructor
 }
 
+export type CartItemCourse = {
+  id: string
+  createdAt: Date
+  course: CourseWithInstructor
+}
+
 export interface ApiError {
   message: string
   code?: string

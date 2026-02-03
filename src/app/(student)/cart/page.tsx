@@ -2,16 +2,15 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { getCartItemCourseIds } from "@/lib/cart"
-import { WishlistGrid } from "./wishlist-grid"
+import { CartGrid } from "./cart-grid"
 
 export const metadata: Metadata = {
-  title: "My Wishlist",
-  description: "Courses you've saved for later",
+  title: "Shopping Cart",
+  description: "Review and checkout your selected courses",
 }
 
-async function getWishlist(userId: string) {
-  const items = await prisma.wishlist.findMany({
+async function getCartItems(userId: string) {
+  const items = await prisma.cartItem.findMany({
     where: { userId },
     include: {
       course: {
@@ -38,23 +37,22 @@ async function getEnrolledCourseIds(userId: string) {
   return enrollments.map((e) => e.courseId)
 }
 
-export default async function WishlistPage() {
+export default async function CartPage() {
   const session = await auth()
 
   if (!session?.user) {
-    redirect("/login?callbackUrl=/wishlist")
+    redirect("/login?callbackUrl=/cart")
   }
 
-  const [wishlist, enrolledCourseIds, cartCourseIds] = await Promise.all([
-    getWishlist(session.user.id),
+  const [cartItems, enrolledCourseIds] = await Promise.all([
+    getCartItems(session.user.id),
     getEnrolledCourseIds(session.user.id),
-    getCartItemCourseIds(session.user.id),
   ])
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-8">My Wishlist</h1>
-      <WishlistGrid initialItems={wishlist} enrolledCourseIds={enrolledCourseIds} cartCourseIds={Array.from(cartCourseIds)} />
+      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+      <CartGrid initialItems={cartItems} enrolledCourseIds={enrolledCourseIds} />
     </div>
   )
 }

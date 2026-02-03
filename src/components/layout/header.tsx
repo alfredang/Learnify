@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Search, Menu, ShoppingCart, Heart } from "lucide-react"
+import { Search, Menu, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { UserMenu } from "./user-menu"
 import { MobileNav } from "./mobile-nav"
+import { CartDropdown } from "./cart-dropdown"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -121,12 +122,7 @@ export function Header() {
                   <span className="sr-only">Wishlist</span>
                 </Link>
               </Button>
-              <Button variant="ghost" size="icon" asChild>
-                <Link href="/my-courses">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="sr-only">My Courses</span>
-                </Link>
-              </Button>
+              <CartDropdown />
               <UserMenu user={user} />
             </>
           ) : (

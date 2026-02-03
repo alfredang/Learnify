@@ -19,6 +19,7 @@ import {
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { getWishlistedCourseIds } from "@/lib/wishlist"
+import { getCartItemCourseIds } from "@/lib/cart"
 import { CourseGrid } from "@/components/courses/course-grid"
 
 const iconMap: Record<string, React.ElementType> = {
@@ -101,7 +102,10 @@ export default async function HomePage() {
     getStats(),
     auth(),
   ])
-  const wishlistedCourseIds = await getWishlistedCourseIds(session?.user?.id)
+  const [wishlistedCourseIds, cartCourseIds] = await Promise.all([
+    getWishlistedCourseIds(session?.user?.id),
+    getCartItemCourseIds(session?.user?.id),
+  ])
 
   return (
     <div className="flex flex-col">
@@ -269,7 +273,7 @@ export default async function HomePage() {
                 <Link href="/courses">View All</Link>
               </Button>
             </div>
-            <CourseGrid courses={featuredCourses} wishlistedCourseIds={wishlistedCourseIds} />
+            <CourseGrid courses={featuredCourses} wishlistedCourseIds={wishlistedCourseIds} cartCourseIds={cartCourseIds} />
           </div>
         </section>
       )}

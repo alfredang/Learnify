@@ -1,26 +1,28 @@
 "use client"
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { formatPrice } from "@/lib/stripe"
+import { AddToCartButton } from "@/components/courses/add-to-cart-button"
+import { BuyNowButton } from "@/components/courses/buy-now-button"
 
 interface MobileBottomBarProps {
-  courseSlug: string
+  courseId: string
   price: number
   discountPrice: number | null
   isFree: boolean
+  isInCart?: boolean
 }
 
 export function MobileBottomBar({
-  courseSlug,
+  courseId,
   price,
   discountPrice,
   isFree,
+  isInCart,
 }: MobileBottomBarProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background p-4 lg:hidden">
       <div className="container flex items-center justify-between gap-4">
-        <div>
+        <div className="flex-shrink-0">
           {isFree ? (
             <span className="text-lg font-bold">Free</span>
           ) : (
@@ -36,11 +38,20 @@ export function MobileBottomBar({
             </div>
           )}
         </div>
-        <Button size="lg" asChild>
-          <Link href={`/courses/${courseSlug}/enroll`}>
-            {isFree ? "Enroll for Free" : "Buy Now"}
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          {isFree ? (
+            <BuyNowButton courseId={courseId} isFree={true} className="w-auto" />
+          ) : (
+            <>
+              <AddToCartButton
+                courseId={courseId}
+                initialInCart={isInCart}
+                variant="full"
+                className="w-auto"
+              />
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
