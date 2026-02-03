@@ -56,7 +56,7 @@ export function CourseCard({
             </Badge>
           )}
         </div>
-        <CardContent className="p-4">
+        <CardContent className="p-4 flex-1">
           <h3 className="font-semibold text-lg line-clamp-2 mb-1">
             {course.title}
           </h3>
