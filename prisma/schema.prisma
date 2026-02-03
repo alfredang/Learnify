@@ -50,6 +50,9 @@ model User {
   purchases    Purchase[]
   certificates Certificate[]
 
+  instructorApplications InstructorApplication[]
+  reviewedApplications   InstructorApplication[] @relation("ReviewedApplications")
+
   @@index([email])
   @@index([role])
 }
@@ -100,6 +103,35 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// ==================== INSTRUCTOR APPLICATIONS ====================
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model InstructorApplication {
+  id        String            @id @default(cuid())
+  headline  String
+  bio       String            @db.Text
+  status    ApplicationStatus @default(PENDING)
+  adminNote String?           @db.Text
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reviewedAt DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reviewedById String?
+  reviewedBy   User?  @relation("ReviewedApplications", fields: [reviewedById], references: [id])
+
+  @@index([userId])
+  @@index([status])
 }
 
 // ==================== COURSE STRUCTURE ====================

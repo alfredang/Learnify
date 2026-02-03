@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
@@ -22,6 +22,8 @@ import Link from "next/link"
 
 export function RegisterForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl")
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<RegisterInput>({
@@ -56,7 +58,10 @@ export function RegisterForm() {
       }
 
       toast.success("Account created successfully! Please sign in.")
-      router.push("/login")
+      const loginUrl = callbackUrl
+        ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
+        : "/login"
+      router.push(loginUrl)
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message)
@@ -165,7 +170,10 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="text-primary hover:underline">
+        <Link
+          href={callbackUrl ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/login"}
+          className="text-primary hover:underline"
+        >
           Sign in
         </Link>
       </p>

@@ -21,5 +21,14 @@ export const becomeInstructorSchema = z.object({
     .max(1000, "Bio must be less than 1000 characters"),
 })
 
+export const reviewApplicationSchema = z.object({
+  status: z.enum(["APPROVED", "REJECTED"]),
+  adminNote: z
+    .string()
+    .max(500, "Note must be less than 500 characters")
+    .optional(),
+})
+
 export type ProfileInput = z.infer<typeof profileSchema>
 export type BecomeInstructorInput = z.infer<typeof becomeInstructorSchema>
+export type ReviewApplicationInput = z.infer<typeof reviewApplicationSchema>

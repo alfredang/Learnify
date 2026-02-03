@@ -7,6 +7,7 @@ import type {
   Review,
   Category,
   Purchase,
+  InstructorApplication,
 } from "@prisma/client"
 
 export type CourseWithInstructor = Course & {
@@ -95,6 +96,11 @@ export type CartItemCourse = {
   id: string
   createdAt: Date
   course: CourseWithInstructor
+}
+
+export type ApplicationWithUser = InstructorApplication & {
+  user: Pick<User, "id" | "name" | "email" | "image">
+  reviewedBy?: Pick<User, "id" | "name"> | null
 }
 
 export interface ApiError {

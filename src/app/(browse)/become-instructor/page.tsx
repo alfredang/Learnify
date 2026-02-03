@@ -1,6 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -15,6 +18,7 @@ import {
   Shield,
   Headphones,
 } from "lucide-react"
+import { BecomeInstructorCTA } from "./become-instructor-cta"
 
 export const metadata: Metadata = {
   title: "Become an Instructor",
@@ -116,7 +120,44 @@ const testimonials = [
   },
 ]
 
-export default function BecomeInstructorPage() {
+export type ApplicationState =
+  | { type: "logged-out" }
+  | { type: "can-apply" }
+  | { type: "pending" }
+  | { type: "rejected"; adminNote: string | null }
+
+export default async function BecomeInstructorPage() {
+  const session = await auth()
+
+  // Instructors/admins shouldn't see this page
+  if (
+    session?.user?.role === "INSTRUCTOR" ||
+    session?.user?.role === "ADMIN"
+  ) {
+    redirect("/instructor")
+  }
+
+  // Determine application state
+  let appState: ApplicationState = { type: "logged-out" }
+
+  if (session?.user) {
+    const application = await prisma.instructorApplication.findFirst({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+    })
+
+    if (!application || application.status === "REJECTED") {
+      appState =
+        application?.status === "REJECTED"
+          ? { type: "rejected", adminNote: application.adminNote }
+          : { type: "can-apply" }
+    } else if (application.status === "PENDING") {
+      appState = { type: "pending" }
+    } else if (application.status === "APPROVED") {
+      redirect("/instructor")
+    }
+  }
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -132,17 +173,9 @@ export default function BecomeInstructorPage() {
                 Join thousands of instructors who are earning money and making
                 an impact by teaching on Learnify.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" asChild>
-                  <Link href="/register">
-                    Start Teaching Today
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="#how-it-works">Learn More</Link>
-                </Button>
-              </div>
+              <BecomeInstructorCTA
+                appState={JSON.parse(JSON.stringify(appState))}
+              />
               <div className="flex items-center gap-6 mt-8">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
@@ -357,12 +390,23 @@ export default function BecomeInstructorPage() {
               Join our community of instructors and start making an impact
               today.
             </p>
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/register">
-                Create Your Instructor Account
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
+            {appState.type === "logged-out" ? (
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/login?callbackUrl=/become-instructor">
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            ) : appState.type === "pending" ? (
+              <Button size="lg" variant="secondary" disabled>
+                Application Under Review
+              </Button>
+            ) : (
+              <BecomeInstructorCTA
+                appState={JSON.parse(JSON.stringify(appState))}
+                variant="bottom"
+              />
+            )}
           </div>
         </div>
       </section>

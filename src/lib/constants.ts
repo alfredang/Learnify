@@ -58,6 +58,12 @@ export const RATING_FILTERS = [
   { value: "3.0", label: "3.0 & up" },
 ] as const
 
+export const APPLICATION_STATUSES = [
+  { value: "PENDING", label: "Pending" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
+] as const
+
 export const PLATFORM_FEE_PERCENT = 30
 export const MIN_COURSE_PRICE = 0
 export const MAX_COURSE_PRICE = 99999

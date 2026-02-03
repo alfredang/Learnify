@@ -133,8 +133,11 @@ export default async function HomePage() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/become-instructor">Become an Instructor</Link>
+                <Button size="lg" variant="outline" className="border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground" asChild>
+                  <Link href="/become-instructor">
+                    Become an Instructor
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
                 </Button>
               </div>
               <div className="flex flex-wrap items-center gap-4 md:gap-6 pt-4 justify-center lg:justify-start">
@@ -290,12 +293,12 @@ export default async function HomePage() {
                 Become an instructor and reach millions of students. Create
                 engaging courses and earn money doing what you love.
               </p>
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/become-instructor">
+              <button className="inline-flex items-center justify-center gap-3 rounded-xl bg-white text-primary font-extrabold text-lg md:text-xl px-10 md:px-14 py-5 md:py-6 shadow-lg shadow-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-white/20 active:scale-100">
+                <Link href="/become-instructor" className="flex items-center gap-3">
                   Start Teaching Today
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="h-6 w-6" />
                 </Link>
-              </Button>
+              </button>
             </div>
             <div className="absolute right-0 top-0 -z-0 h-full w-1/2 opacity-10">
               <svg
