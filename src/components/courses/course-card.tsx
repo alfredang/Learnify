@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { StarRating } from "@/components/shared/star-rating"
 import { Users } from "lucide-react"
+import { formatPrice } from "@/lib/stripe"
 import type { CourseWithInstructor } from "@/types"
 
 interface CourseCardProps {
@@ -60,11 +61,11 @@ export function CourseCard({ course }: CourseCardProps) {
             ) : (
               <>
                 <span className="font-bold text-lg">
-                  ${discountPrice ?? price}
+                  {formatPrice(discountPrice ?? price)}
                 </span>
                 {discountPrice && (
                   <span className="text-sm text-muted-foreground line-through">
-                    ${price}
+                    {formatPrice(price)}
                   </span>
                 )}
               </>

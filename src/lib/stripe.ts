@@ -43,7 +43,7 @@ export async function createCheckoutSession({
             name: courseName,
             images: courseImage ? [courseImage] : [],
           },
-          unit_amount: coursePrice,
+          unit_amount: Math.round(coursePrice * 100),
         },
         quantity: 1,
       },
@@ -59,11 +59,11 @@ export async function createCheckoutSession({
   return session
 }
 
-export function formatPrice(priceInCents: number): string {
+export function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(priceInCents / 100)
+  }).format(price)
 }
 
 export function calculatePlatformFee(amount: number): number {

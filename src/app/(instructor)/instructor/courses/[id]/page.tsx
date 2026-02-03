@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/shared/rich-text-editor"
 import {
   Select,
   SelectContent,
@@ -364,11 +364,11 @@ export default function CourseEditorPage() {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea
+                          <RichTextEditor
+                            content={field.value || ""}
+                            onChange={field.onChange}
                             placeholder="Describe your course in detail. What will students learn? What makes this course unique?"
-                            className="min-h-[180px]"
                             disabled={isSaving}
-                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
