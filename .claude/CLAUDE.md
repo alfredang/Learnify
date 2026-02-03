@@ -113,10 +113,11 @@ learnify/
 │   │   ├── (browse)/              # Public pages: courses, categories, instructors, search, about
 │   │   ├── (student)/             # Student pages: my-courses, lecture viewer, account, certificates
 │   │   ├── (instructor)/          # Instructor pages: dashboard, course management
-│   │   ├── (admin)/               # Admin pages: dashboard, users, courses
+│   │   ├── (admin)/               # Admin pages: dashboard, users, courses, applications
 │   │   └── api/                   # API routes (REST endpoints)
 │   ├── components/
-│   │   ├── auth/                  # LoginForm, RegisterForm, SocialButtons
+│   │   ├── auth/                  # LoginForm, RegisterForm, SocialButtons, InstructorApplicationForm
+│   │   ├── admin/                 # ApplicationActions (approve/reject instructor applications)
 │   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters, CourseFiltersWrapper, CourseContentEditor, VideoPlayer, VideoUpload, LectureSidebar, MobileBottomBar, QuizPlayer, QuizBuilder, WishlistButton
 │   │   ├── layout/                # Header, Footer, MobileNav, UserMenu
 │   │   ├── shared/                # EmptyState, LoadingSpinner, StarRating, RichTextEditor
@@ -197,6 +198,10 @@ External Services:
 | `/api/certificates/[id]/download` | GET | Yes | Download certificate |
 | `/api/invoices/[id]` | GET | Yes | Get invoice details |
 | `/api/wishlist` | POST/DELETE | Yes | Add/remove course from wishlist |
+| `/api/instructor-applications` | GET | Yes | Get current user's application status |
+| `/api/instructor-applications` | POST | Student | Submit instructor application (headline + bio) |
+| `/api/admin/instructor-applications` | GET | Admin | List all instructor applications |
+| `/api/admin/instructor-applications/[id]` | PATCH | Admin | Approve or reject application (updates user role on approval) |
 
 ### Database Models
 
@@ -209,6 +214,7 @@ Key models in `prisma/schema.prisma`:
 - **Enrollment** / **LectureProgress** - Student progress tracking per lecture.
 - **Purchase** / **Earning** - Payment records with 70/30 split calculated.
 - **Review** - 1-5 rating with approval workflow.
+- **InstructorApplication** - status: PENDING, APPROVED, REJECTED. Tracks headline, bio, admin review notes. On approval, user role changes to INSTRUCTOR.
 - **Wishlist**, **Certificate**, **Resource** - Supporting features.
 - **PlatformSettings** - Configurable platform fee (default 30%).
 
@@ -293,6 +299,7 @@ Key models in `prisma/schema.prisma`:
 13. **TipTap rich text editor** is used for course descriptions via `src/components/shared/rich-text-editor.tsx`. It uses `@tiptap/starter-kit` with placeholder extension. Output is HTML stored in the course `description` field.
 14. **dnd-kit** is used for drag-and-drop reordering of sections and lectures in `CourseContentEditor`. Uses `@dnd-kit/core` + `@dnd-kit/sortable`. Reorder is persisted via dedicated `/reorder` API endpoints.
 15. **Wishlist** uses a dedicated API route (`/api/wishlist`) and helper (`src/lib/wishlist.ts`). The `WishlistButton` component handles optimistic UI toggling across pages.
+16. **Become Instructor** flow uses admin approval. Students submit an application (headline + bio) via `/api/instructor-applications`. Admins approve/reject at `/admin/applications`. On approval, a `prisma.$transaction` updates both the application status and the user's role to INSTRUCTOR. The JWT callback in `auth.ts` re-reads the role from DB when `trigger === "update"` is called via `useSession().update()` on the client. The become-instructor page (`src/app/(browse)/become-instructor/page.tsx`) is a server component that handles 5 states: logged-out, can-apply, pending, rejected, and already-instructor (redirect).
 
 ---
 
