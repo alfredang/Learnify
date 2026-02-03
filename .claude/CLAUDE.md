@@ -110,7 +110,7 @@ learnify/
 │   │   ├── error.tsx              # Error boundary
 │   │   ├── global-error.tsx       # Root error boundary
 │   │   ├── (auth)/                # Auth pages: login, register, forgot-password
-│   │   ├── (browse)/              # Public pages: courses, categories, search, about
+│   │   ├── (browse)/              # Public pages: courses, categories, instructors, search, about
 │   │   ├── (student)/             # Student pages: my-courses, lecture viewer, account, certificates
 │   │   ├── (instructor)/          # Instructor pages: dashboard, course management
 │   │   ├── (admin)/               # Admin pages: dashboard, users, courses
@@ -166,7 +166,7 @@ External Services:
 | Group | Path Prefix | Layout | Auth Required |
 |---|---|---|---|
 | `(auth)` | `/login`, `/register`, `/forgot-password` | Centered fullscreen | No (redirects away if logged in) |
-| `(browse)` | `/courses`, `/categories`, `/search`, `/about`, `/become-instructor` | Default (Header + Footer) | No |
+| `(browse)` | `/courses`, `/categories`, `/instructors`, `/search`, `/about`, `/become-instructor` | Default (Header + Footer) | No |
 | `(student)` | `/my-courses`, `/wishlist`, `/account`, `/certificates`, `/messages`, `/notifications` | Default | Yes (any role) |
 | `(instructor)` | `/instructor/*` | Sidebar layout | Yes (INSTRUCTOR or ADMIN) |
 | `(admin)` | `/admin/*` | Sidebar layout | Yes (ADMIN only) |
