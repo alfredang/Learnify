@@ -39,7 +39,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { VideoUpload } from "@/components/courses/video-upload"
+import { QuizBuilder } from "@/components/courses/quiz-builder"
+import { quizDataSchema } from "@/lib/validations/course"
+import { cn } from "@/lib/utils"
 
 interface Section {
   id: string
@@ -78,6 +98,82 @@ function formatDuration(seconds: number | null): string {
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
   return `${m}:${String(s).padStart(2, "0")}`
+}
+
+function SortableSectionItem({
+  id,
+  children,
+}: {
+  id: string
+  children: (handleProps: {
+    attributes: ReturnType<typeof useSortable>["attributes"]
+    listeners: ReturnType<typeof useSortable>["listeners"]
+  }) => React.ReactNode
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "border rounded-lg overflow-hidden",
+        isDragging && "opacity-50 ring-2 ring-primary/20 z-10"
+      )}
+    >
+      {children({ attributes, listeners })}
+    </div>
+  )
+}
+
+function SortableLectureItem({
+  id,
+  children,
+}: {
+  id: string
+  children: (handleProps: {
+    attributes: ReturnType<typeof useSortable>["attributes"]
+    listeners: ReturnType<typeof useSortable>["listeners"]
+  }) => React.ReactNode
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-3 px-4 py-2.5 pl-12 hover:bg-muted/20 transition-colors group",
+        isDragging && "opacity-50 bg-muted/30 ring-1 ring-primary/20"
+      )}
+    >
+      {children({ attributes, listeners })}
+    </div>
+  )
 }
 
 export function CourseContentEditor({
@@ -134,6 +230,109 @@ export function CourseContentEditor({
 
   async function refreshCourse() {
     await queryClient.invalidateQueries({ queryKey: ["course", courseId] })
+  }
+
+  // ─── Drag-and-Drop ────────────────────────────────────────
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  async function handleSectionDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = initialSections.findIndex((s) => s.id === active.id)
+    const newIndex = initialSections.findIndex((s) => s.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(initialSections, oldIndex, newIndex)
+    const orderedIds = reordered.map((s) => s.id)
+
+    // Optimistic update
+    queryClient.setQueryData(
+      ["course", courseId],
+      (old: { course: { sections: Section[] } } | undefined) => {
+        if (!old) return old
+        return {
+          ...old,
+          course: {
+            ...old.course,
+            sections: reordered.map((s, i) => ({ ...s, position: i })),
+          },
+        }
+      }
+    )
+
+    try {
+      const res = await fetch(`/api/courses/${courseId}/sections/reorder`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds }),
+      })
+      if (!res.ok) throw new Error("Failed to reorder sections")
+    } catch {
+      toast.error("Failed to reorder sections")
+      await refreshCourse()
+    }
+  }
+
+  async function handleLectureDragEnd(sectionId: string, event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const section = initialSections.find((s) => s.id === sectionId)
+    if (!section) return
+
+    const oldIndex = section.lectures.findIndex((l) => l.id === active.id)
+    const newIndex = section.lectures.findIndex((l) => l.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(section.lectures, oldIndex, newIndex)
+    const orderedIds = reordered.map((l) => l.id)
+
+    // Optimistic update
+    queryClient.setQueryData(
+      ["course", courseId],
+      (old: { course: { sections: Section[] } } | undefined) => {
+        if (!old) return old
+        return {
+          ...old,
+          course: {
+            ...old.course,
+            sections: old.course.sections.map((s) =>
+              s.id === sectionId
+                ? {
+                    ...s,
+                    lectures: reordered.map((l, i) => ({
+                      ...l,
+                      position: i,
+                    })),
+                  }
+                : s
+            ),
+          },
+        }
+      }
+    )
+
+    try {
+      const res = await fetch(
+        `/api/courses/${courseId}/sections/${sectionId}/lectures/reorder`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderedIds }),
+        }
+      )
+      if (!res.ok) throw new Error("Failed to reorder lectures")
+    } catch {
+      toast.error("Failed to reorder lectures")
+      await refreshCourse()
+    }
   }
 
   // ─── Section CRUD ────────────────────────────────────────
@@ -261,6 +460,19 @@ export function CourseContentEditor({
 
   async function handleAddLecture() {
     if (!addLectureToSection || !lectureTitle.trim()) return
+    if (lectureType === "QUIZ" && lectureContent) {
+      try {
+        const parsed = JSON.parse(lectureContent)
+        const result = quizDataSchema.safeParse(parsed)
+        if (!result.success) {
+          toast.error(result.error.issues[0]?.message || "Invalid quiz data")
+          return
+        }
+      } catch {
+        toast.error("Invalid quiz data format")
+        return
+      }
+    }
     setLectureLoading(true)
     try {
       const res = await fetch(
@@ -304,6 +516,19 @@ export function CourseContentEditor({
 
   async function handleEditLecture() {
     if (!editingLecture || !lectureTitle.trim()) return
+    if (lectureType === "QUIZ" && lectureContent) {
+      try {
+        const parsed = JSON.parse(lectureContent)
+        const result = quizDataSchema.safeParse(parsed)
+        if (!result.success) {
+          toast.error(result.error.issues[0]?.message || "Invalid quiz data")
+          return
+        }
+      } catch {
+        toast.error("Invalid quiz data format")
+        return
+      }
+    }
     setLectureLoading(true)
     try {
       const res = await fetch(
@@ -403,101 +628,58 @@ export function CourseContentEditor({
               <p>No sections yet. Add your first section to get started.</p>
             </div>
           ) : (
-            initialSections.map((section) => {
-              const isExpanded = expandedSections.has(section.id)
-              return (
-                <div
-                  key={section.id}
-                  className="border rounded-lg overflow-hidden"
-                >
-                  {/* Section header */}
-                  <div
-                    className="flex items-center gap-2 px-4 py-3 bg-muted/40 cursor-pointer hover:bg-muted/60 transition-colors"
-                    onClick={() => toggleSection(section.id)}
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                    {isExpanded ? (
-                      <ChevronDown className="h-4 w-4 shrink-0" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <span className="font-medium text-sm">
-                        Section {section.position + 1}: {section.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {section.lectures.length} lecture
-                        {section.lectures.length !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <div
-                      className="flex items-center gap-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => openEditSection(section)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => setDeletingSection(section)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Lectures list */}
-                  {isExpanded && (
-                    <div className="divide-y">
-                      {section.lectures.map((lecture) => {
-                        const Icon = lectureTypeIcons[lecture.type]
-                        return (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleSectionDragEnd}
+            >
+              <SortableContext
+                items={initialSections.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {initialSections.map((section) => {
+                  const isExpanded = expandedSections.has(section.id)
+                  return (
+                    <SortableSectionItem key={section.id} id={section.id}>
+                      {({ attributes, listeners }) => (
+                        <>
+                          {/* Section header */}
                           <div
-                            key={lecture.id}
-                            className="flex items-center gap-3 px-4 py-2.5 pl-12 hover:bg-muted/20 transition-colors group"
+                            className="flex items-center gap-2 px-4 py-3 bg-muted/40 cursor-pointer hover:bg-muted/60 transition-colors"
+                            onClick={() => toggleSection(section.id)}
                           >
-                            <GripVertical className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <button
+                              type="button"
+                              className="cursor-grab active:cursor-grabbing touch-none shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                              {...attributes}
+                              {...listeners}
+                            >
+                              <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 shrink-0" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 shrink-0" />
+                            )}
                             <div className="flex-1 min-w-0">
-                              <span className="text-sm">{lecture.title}</span>
-                              {lecture.isFreePreview && (
-                                <Badge
-                                  variant="secondary"
-                                  className="ml-2 text-xs bg-green-100 text-green-800"
-                                >
-                                  Free Preview
-                                </Badge>
-                              )}
-                            </div>
-                            {lecture.type === "VIDEO" && lecture.videoDuration && (
-                              <span className="text-xs text-muted-foreground">
-                                {formatDuration(lecture.videoDuration)}
+                              <span className="font-medium text-sm">
+                                Section {section.position + 1}: {section.title}
                               </span>
-                            )}
-                            {lecture.type === "VIDEO" && (
-                              <div className="shrink-0">
-                                {lecture.videoUrl ? (
-                                  <Video className="h-3.5 w-3.5 text-green-600" />
-                                ) : (
-                                  <Video className="h-3.5 w-3.5 text-muted-foreground/40" />
-                                )}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-xs text-muted-foreground ml-2">
+                                {section.lectures.length} lecture
+                                {section.lectures.length !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+                            <div
+                              className="flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7"
-                                onClick={() =>
-                                  openEditLecture(lecture, section.id)
-                                }
+                                onClick={() => openEditSection(section)}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
@@ -505,37 +687,132 @@ export function CourseContentEditor({
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-destructive hover:text-destructive"
-                                onClick={() =>
-                                  setDeletingLecture({
-                                    lecture,
-                                    sectionId: section.id,
-                                  })
-                                }
+                                onClick={() => setDeletingSection(section)}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </div>
-                        )
-                      })}
 
-                      {/* Add lecture button */}
-                      <div className="px-4 py-2 pl-12">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground"
-                          onClick={() => openAddLecture(section.id)}
-                        >
-                          <Plus className="h-3.5 w-3.5 mr-1.5" />
-                          Add Lecture
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })
+                          {/* Lectures list */}
+                          {isExpanded && (
+                            <div className="divide-y">
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={(e) =>
+                                  handleLectureDragEnd(section.id, e)
+                                }
+                              >
+                                <SortableContext
+                                  items={section.lectures.map((l) => l.id)}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  {section.lectures.map((lecture) => {
+                                    const Icon = lectureTypeIcons[lecture.type]
+                                    return (
+                                      <SortableLectureItem
+                                        key={lecture.id}
+                                        id={lecture.id}
+                                      >
+                                        {({ attributes: lectureAttrs, listeners: lectureListeners }) => (
+                                          <>
+                                            <button
+                                              type="button"
+                                              className="cursor-grab active:cursor-grabbing touch-none shrink-0"
+                                              {...lectureAttrs}
+                                              {...lectureListeners}
+                                            >
+                                              <GripVertical className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </button>
+                                            <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                              <span className="text-sm">
+                                                {lecture.title}
+                                              </span>
+                                              {lecture.isFreePreview && (
+                                                <Badge
+                                                  variant="secondary"
+                                                  className="ml-2 text-xs bg-green-100 text-green-800"
+                                                >
+                                                  Free Preview
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            {lecture.type === "VIDEO" &&
+                                              lecture.videoDuration && (
+                                                <span className="text-xs text-muted-foreground">
+                                                  {formatDuration(
+                                                    lecture.videoDuration
+                                                  )}
+                                                </span>
+                                              )}
+                                            {lecture.type === "VIDEO" && (
+                                              <div className="shrink-0">
+                                                {lecture.videoUrl ? (
+                                                  <Video className="h-3.5 w-3.5 text-green-600" />
+                                                ) : (
+                                                  <Video className="h-3.5 w-3.5 text-muted-foreground/40" />
+                                                )}
+                                              </div>
+                                            )}
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() =>
+                                                  openEditLecture(
+                                                    lecture,
+                                                    section.id
+                                                  )
+                                                }
+                                              >
+                                                <Pencil className="h-3.5 w-3.5" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                                onClick={() =>
+                                                  setDeletingLecture({
+                                                    lecture,
+                                                    sectionId: section.id,
+                                                  })
+                                                }
+                                              >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                              </Button>
+                                            </div>
+                                          </>
+                                        )}
+                                      </SortableLectureItem>
+                                    )
+                                  })}
+                                </SortableContext>
+                              </DndContext>
+
+                              {/* Add lecture button */}
+                              <div className="px-4 py-2 pl-12">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-muted-foreground"
+                                  onClick={() => openAddLecture(section.id)}
+                                >
+                                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                                  Add Lecture
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </SortableSectionItem>
+                  )
+                })}
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>
@@ -678,11 +955,11 @@ export function CourseContentEditor({
           }
         }}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className={cn("max-w-lg", lectureType === "QUIZ" && "max-w-2xl")}>
           <DialogHeader>
             <DialogTitle>Add Lecture</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto max-h-[60vh] pr-1">
             <div className="space-y-2">
               <Label>Title</Label>
               <Input
@@ -765,19 +1042,11 @@ export function CourseContentEditor({
             {lectureType === "QUIZ" && (
               <>
                 <Separator />
-                <div className="space-y-2">
-                  <Label>Quiz Content</Label>
-                  <Textarea
-                    placeholder="Enter quiz questions and answers (one per line, format: Q: question / A: answer)"
-                    value={lectureContent}
-                    onChange={(e) => setLectureContent(e.target.value)}
-                    rows={8}
-                    className="min-h-[200px]"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Tip: Use &ldquo;Q:&rdquo; for questions and &ldquo;A:&rdquo; for answers, one per line.
-                  </p>
-                </div>
+                <QuizBuilder
+                  value={lectureContent}
+                  onChange={setLectureContent}
+                  disabled={lectureLoading}
+                />
               </>
             )}
           </div>
@@ -810,11 +1079,11 @@ export function CourseContentEditor({
           }
         }}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className={cn("max-w-lg", lectureType === "QUIZ" && "max-w-2xl")}>
           <DialogHeader>
             <DialogTitle>Edit Lecture</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto max-h-[60vh] pr-1">
             <div className="space-y-2">
               <Label>Title</Label>
               <Input
@@ -899,19 +1168,11 @@ export function CourseContentEditor({
             {lectureType === "QUIZ" && (
               <>
                 <Separator />
-                <div className="space-y-2">
-                  <Label>Quiz Content</Label>
-                  <Textarea
-                    placeholder="Enter quiz questions and answers (one per line, format: Q: question / A: answer)"
-                    value={lectureContent}
-                    onChange={(e) => setLectureContent(e.target.value)}
-                    rows={8}
-                    className="min-h-[200px]"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Tip: Use &ldquo;Q:&rdquo; for questions and &ldquo;A:&rdquo; for answers, one per line.
-                  </p>
-                </div>
+                <QuizBuilder
+                  value={lectureContent}
+                  onChange={setLectureContent}
+                  disabled={lectureLoading}
+                />
               </>
             )}
           </div>

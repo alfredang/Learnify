@@ -63,3 +63,13 @@ export const MIN_COURSE_PRICE = 0
 export const MAX_COURSE_PRICE = 99999
 
 export const ITEMS_PER_PAGE = 12
+
+export const QUIZ_QUESTION_TYPES = [
+  { value: "multiple_choice", label: "Multiple Choice" },
+  { value: "multiple_select", label: "Multiple Select" },
+  { value: "open_ended", label: "Open Ended" },
+] as const
+
+export const MAX_QUIZ_OPTIONS = 6
+export const MIN_QUIZ_OPTIONS = 2
+export const MAX_QUIZ_QUESTIONS = 50
