@@ -77,6 +77,7 @@ export default function CourseEditorPage() {
 
   const [isSaving, setIsSaving] = useState(false)
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
+  const [formResetKey, setFormResetKey] = useState(0)
 
   const {
     data: courseData,
@@ -112,9 +113,10 @@ export default function CourseEditorPage() {
     },
   })
 
-  // Populate form when course data loads
+  // Populate form when course data AND categories are both loaded so the
+  // category Select has its items available when the value is set
   useEffect(() => {
-    if (course) {
+    if (course && categories.length > 0) {
       form.reset({
         title: course.title || "",
         subtitle: course.subtitle || "",
@@ -129,8 +131,9 @@ export default function CourseEditorPage() {
         targetAudience: course.targetAudience || [],
       })
       setThumbnailUrl(course.thumbnail || null)
+      setFormResetKey((k) => k + 1)
     }
-  }, [course, form])
+  }, [course, categories.length, form])
 
   async function onSubmit(data: CourseInput) {
     setIsSaving(true)
@@ -354,7 +357,7 @@ export default function CourseEditorPage() {
                         <FormItem>
                           <FormLabel>Category</FormLabel>
                           <Select
-                            key={categories.length}
+                            key={formResetKey}
                             onValueChange={field.onChange}
                             value={field.value}
                             disabled={isSaving}
@@ -386,6 +389,7 @@ export default function CourseEditorPage() {
                         <FormItem>
                           <FormLabel>Level</FormLabel>
                           <Select
+                            key={formResetKey}
                             onValueChange={field.onChange}
                             value={field.value}
                             disabled={isSaving}
