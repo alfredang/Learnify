@@ -49,6 +49,13 @@ export function UserMenu({ user }: UserMenuProps) {
   const handleSignOut = async () => {
     await signOut({ redirect: false })
     queryClient.clear()
+    // Clear auth cookies manually as fallback for proxy environments
+    document.cookie.split(";").forEach((c) => {
+      const name = c.trim().split("=")[0]
+      if (name.includes("authjs") || name.includes("next-auth")) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+      }
+    })
     window.location.href = "/"
   }
 
