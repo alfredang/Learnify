@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { nanoid } from "nanoid"
 
 export async function POST(
   request: NextRequest,
@@ -29,6 +30,9 @@ export async function POST(
               include: {
                 enrollments: {
                   where: { userId: session.user.id },
+                },
+                instructor: {
+                  select: { name: true },
                 },
                 sections: {
                   include: {
@@ -108,20 +112,42 @@ export async function POST(
       ? Math.round((completedCount / totalLectures) * 100)
       : 0
 
+    const justCompleted = newProgress === 100 && !enrollment.completedAt
+
     await prisma.enrollment.update({
       where: { id: enrollment.id },
       data: {
         progress: newProgress,
         lastAccessedAt: new Date(),
-        ...(newProgress === 100 && !enrollment.completedAt
-          ? { completedAt: new Date() }
-          : {}),
+        ...(justCompleted ? { completedAt: new Date() } : {}),
       },
     })
+
+    // Auto-generate certificate on first completion
+    let certificateGenerated = false
+    if (justCompleted) {
+      const existingCert = await prisma.certificate.findFirst({
+        where: { userId: session.user.id, courseId: course.id },
+      })
+      if (!existingCert) {
+        await prisma.certificate.create({
+          data: {
+            certificateId: `CERT-${nanoid(10).toUpperCase()}`,
+            userId: session.user.id,
+            courseId: course.id,
+            courseName: course.title,
+            instructorName: course.instructor.name || "Instructor",
+          },
+        })
+        certificateGenerated = true
+      }
+    }
 
     return NextResponse.json({
       progress,
       courseProgress: newProgress,
+      courseCompleted: justCompleted,
+      certificateGenerated,
     })
   } catch (error) {
     console.error("[LECTURE_PROGRESS_UPDATE]", error)

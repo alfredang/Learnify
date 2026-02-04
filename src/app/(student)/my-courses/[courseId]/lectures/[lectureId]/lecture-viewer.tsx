@@ -81,6 +81,18 @@ export function LectureViewer({
           if (result.courseProgress !== undefined) {
             setCourseProgress(result.courseProgress)
           }
+
+          if (result.courseCompleted) {
+            toast.success("Congratulations! You've completed this course!", {
+              description: result.certificateGenerated
+                ? "Your certificate is ready to view."
+                : undefined,
+              action: result.certificateGenerated
+                ? { label: "View Certificate", onClick: () => router.push("/certificates") }
+                : undefined,
+              duration: 8000,
+            })
+          }
         }
       } catch {
         // Silent fail for background saves

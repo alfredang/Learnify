@@ -26,17 +26,13 @@ async function getCertificates(userId: string) {
 
 async function getCompletedCourses(userId: string) {
   try {
-    // Get courses where all lectures are completed
+    // Get courses that the student has completed (completedAt is set by the
+    // progress API when all lectures are finished)
     const enrollments = await prisma.enrollment.findMany({
-      where: { userId },
+      where: { userId, completedAt: { not: null } },
       include: {
         course: {
           include: {
-            sections: {
-              include: {
-                lectures: true,
-              },
-            },
             instructor: {
               select: { name: true },
             },
@@ -45,26 +41,13 @@ async function getCompletedCourses(userId: string) {
       },
     })
 
-    const progress = await prisma.lectureProgress.findMany({
-      where: { userId, isCompleted: true },
-      select: { lectureId: true },
-    })
-
-    const completedLectureIds = new Set(progress.map((p) => p.lectureId))
-
-    return enrollments
-      .filter((enrollment) => {
-        const allLectures = enrollment.course.sections.flatMap((s) => s.lectures)
-        if (allLectures.length === 0) return false
-        return allLectures.every((lecture) => completedLectureIds.has(lecture.id))
-      })
-      .map((e) => ({
-        courseId: e.course.id,
-        courseTitle: e.course.title,
-        courseSlug: e.course.slug,
-        instructorName: e.course.instructor.name,
-        completedAt: e.updatedAt,
-      }))
+    return enrollments.map((e) => ({
+      courseId: e.course.id,
+      courseTitle: e.course.title,
+      courseSlug: e.course.slug,
+      instructorName: e.course.instructor.name,
+      completedAt: e.completedAt,
+    }))
   } catch (error) {
     console.error("Failed to fetch completed courses:", error)
     return []
