@@ -97,14 +97,28 @@ PUT    /api/courses/:id/sections/:sId/lectures/:lId      # Update lecture
 DELETE /api/courses/:id/sections/:sId/lectures/:lId      # Delete lecture
 POST   /api/lectures/:id/progress            # Update lecture progress
 GET    /api/categories                       # List categories
+GET    /api/courses/:id/reviews               # List reviews
+POST   /api/courses/:id/reviews              # Create review
+PUT    /api/courses/:id/reviews/:rId         # Update review
+DELETE /api/courses/:id/reviews/:rId         # Delete review
+GET    /api/enrollments                      # List enrollments
+POST   /api/enrollments                      # Create enrollment
+GET    /api/cart                             # List cart items
+POST   /api/cart                             # Add to cart
+DELETE /api/cart                             # Remove from cart
+POST   /api/favourites                       # Add to favourites
+DELETE /api/favourites                       # Remove from favourites
 POST   /api/checkout                         # Stripe checkout
+POST   /api/checkout/verify                  # Verify checkout session
 POST   /api/webhooks/stripe                  # Stripe webhooks
 POST   /api/upload/signature                 # Cloudinary upload signature
-POST   /api/wishlist                         # Add to wishlist
-DELETE /api/wishlist                         # Remove from wishlist
 POST   /api/certificates/generate            # Generate certificate
 GET    /api/certificates/:id/download        # Download certificate
 GET    /api/invoices/:id                     # Get invoice
+GET    /api/instructor-applications          # Application status
+POST   /api/instructor-applications          # Submit application
+GET    /api/admin/instructor-applications    # List applications (admin)
+PATCH  /api/admin/instructor-applications/:id # Approve/reject (admin)
 ```
 
 ### Server Actions
@@ -166,16 +180,7 @@ Payment processing:
 
 Media management:
 
-- Video upload and storage
-- Automatic transcoding
-- Adaptive streaming
-- Global CDN
-
-### Cloudinary
-
-Media management:
-
-- Video upload and storage via signed uploads
+- Video and image upload via signed uploads
 - Automatic transcoding
 - Adaptive streaming
 - Global CDN delivery

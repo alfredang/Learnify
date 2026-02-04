@@ -111,16 +111,16 @@ learnify/
 │   │   ├── global-error.tsx       # Root error boundary
 │   │   ├── (auth)/                # Auth pages: login, register, forgot-password
 │   │   ├── (browse)/              # Public pages: courses, categories, instructors, search, about
-│   │   ├── (student)/             # Student pages: my-courses, lecture viewer, account, certificates
+│   │   ├── (student)/             # Student pages: my-courses, lecture viewer, cart, favourites, account, certificates
 │   │   ├── (instructor)/          # Instructor pages: dashboard, course management
 │   │   ├── (admin)/               # Admin pages: dashboard, users, courses, applications
 │   │   └── api/                   # API routes (REST endpoints)
 │   ├── components/
 │   │   ├── auth/                  # LoginForm, RegisterForm, SocialButtons, InstructorApplicationForm
 │   │   ├── admin/                 # ApplicationActions (approve/reject instructor applications)
-│   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters, CourseFiltersWrapper, CourseContentEditor, VideoPlayer, VideoUpload, LectureSidebar, MobileBottomBar, QuizPlayer, QuizBuilder, WishlistButton
-│   │   ├── layout/                # Header, Footer, MobileNav, UserMenu
-│   │   ├── shared/                # EmptyState, LoadingSpinner, StarRating, RichTextEditor
+│   │   ├── courses/               # CourseCard, CourseGrid, CourseFilters, CourseFiltersWrapper, CourseContentEditor, VideoPlayer, VideoUpload, ImageUpload, LectureSidebar, MobileBottomBar, QuizPlayer, QuizBuilder, FavouriteButton, AddToCartButton, BuyNowButton, RatingSummary, ReviewForm, ReviewList, CourseReviewsSection
+│   │   ├── layout/                # Header, Footer, MobileNav, UserMenu, CartDropdown
+│   │   ├── shared/                # EmptyState, LoadingSpinner, PageLoader, StarRating, RichTextEditor, ArrayFieldEditor
 │   │   └── ui/                    # 23 shadcn/ui components (Radix-based)
 │   ├── hooks/                     # use-auth.ts, use-debounce.ts
 │   ├── lib/
@@ -130,7 +130,11 @@ learnify/
 │   │   ├── cloudinary.ts          # Cloudinary helpers (upload, delete, thumbnails)
 │   │   ├── utils.ts               # cn() - Tailwind class merger
 │   │   ├── constants.ts           # App constants (categories, filters, ITEMS_PER_PAGE)
-│   │   ├── wishlist.ts            # Wishlist helper (getWishlistedCourseIds)
+│   │   ├── cart.ts                # Cart management helpers
+│   │   ├── enrollment.ts          # Enrollment helpers
+│   │   ├── favourites.ts          # Favourites helper (replaces wishlist in UI)
+│   │   ├── reviews.ts             # Review helpers
+│   │   ├── wishlist.ts            # Wishlist DB helper (legacy, backs favourites)
 │   │   └── validations/           # Zod schemas: auth.ts, course.ts, user.ts
 │   ├── providers/                 # AuthProvider, QueryProvider, composite Providers
 │   ├── types/                     # TypeScript types (index.ts)
@@ -168,7 +172,7 @@ External Services:
 |---|---|---|---|
 | `(auth)` | `/login`, `/register`, `/forgot-password` | Centered fullscreen | No (redirects away if logged in) |
 | `(browse)` | `/courses`, `/categories`, `/instructors`, `/search`, `/about`, `/become-instructor` | Default (Header + Footer) | No |
-| `(student)` | `/my-courses`, `/wishlist`, `/account`, `/certificates`, `/messages`, `/notifications` | Default | Yes (any role) |
+| `(student)` | `/my-courses`, `/cart`, `/favourites`, `/account`, `/account/purchases`, `/account/invoices`, `/certificates`, `/messages`, `/notifications` | Default | Yes (any role) |
 | `(instructor)` | `/instructor/*` | Sidebar layout | Yes (INSTRUCTOR or ADMIN) |
 | `(admin)` | `/admin/*` | Sidebar layout | Yes (ADMIN only) |
 
@@ -191,13 +195,20 @@ External Services:
 | `/api/courses/[id]/sections/[sectionId]/lectures/reorder` | PUT | Instructor/Admin | Reorder lectures (drag & drop) |
 | `/api/courses/[id]/sections/[sectionId]/lectures/[lectureId]` | PUT/DELETE | Instructor/Admin | Update or delete lecture |
 | `/api/lectures/[lectureId]/progress` | POST | Yes | Update lecture progress (position, completion) |
+| `/api/courses/[id]/reviews` | GET | No | List course reviews |
+| `/api/courses/[id]/reviews` | POST | Yes | Create review |
+| `/api/courses/[id]/reviews/[reviewId]` | PUT/DELETE | Yes | Update or delete review |
+| `/api/enrollments` | GET/POST | Yes | List or create enrollments |
+| `/api/cart` | GET/POST/DELETE | Yes | Cart management (list, add, remove) |
+| `/api/favourites` | POST/DELETE | Yes | Add/remove course from favourites |
 | `/api/checkout` | POST | Yes | Create Stripe checkout session |
+| `/api/checkout/verify` | POST | Yes | Verify checkout session |
 | `/api/webhooks/stripe` | POST | Stripe signature | Handle payment events |
 | `/api/upload/signature` | POST | Yes | Get Cloudinary upload signature |
 | `/api/certificates/generate` | POST | Yes | Generate completion certificate |
 | `/api/certificates/[id]/download` | GET | Yes | Download certificate |
 | `/api/invoices/[id]` | GET | Yes | Get invoice details |
-| `/api/wishlist` | POST/DELETE | Yes | Add/remove course from wishlist |
+| `/api/wishlist` | POST/DELETE | Yes | Legacy wishlist endpoint (use `/api/favourites` instead) |
 | `/api/instructor-applications` | GET | Yes | Get current user's application status |
 | `/api/instructor-applications` | POST | Student | Submit instructor application (headline + bio) |
 | `/api/admin/instructor-applications` | GET | Admin | List all instructor applications |
@@ -213,10 +224,13 @@ Key models in `prisma/schema.prisma`:
 - **Section** / **Lecture** - Course content hierarchy. Lectures have type: VIDEO, TEXT, QUIZ.
 - **Enrollment** / **LectureProgress** - Student progress tracking per lecture.
 - **Purchase** / **Earning** - Payment records with 70/30 split calculated.
-- **Review** - 1-5 rating with approval workflow.
+- **Review** - 1-5 rating with approval workflow. One review per user per course (unique constraint). Supports instructor response.
+- **CartItem** - Shopping cart items. One per user per course (unique constraint). Cleared after checkout.
 - **InstructorApplication** - status: PENDING, APPROVED, REJECTED. Tracks headline, bio, admin review notes. On approval, user role changes to INSTRUCTOR.
-- **Wishlist**, **Certificate**, **Resource** - Supporting features.
+- **Wishlist** - Backs the favourites feature. DB model is named `Wishlist` but UI uses "favourites" terminology.
+- **Certificate**, **Resource** - Supporting features.
 - **PlatformSettings** - Configurable platform fee (default 30%).
+- **Enums** - `UserRole`, `CourseStatus`, `CourseLevel`, `LectureType`, `ApplicationStatus`, `PurchaseStatus`, `PayoutStatus`.
 
 ---
 
@@ -298,8 +312,12 @@ Key models in `prisma/schema.prisma`:
 12. **Quiz data** is stored as JSON in `Lecture.content` using the `QuizData` type (version 1). The `QuizPlayer` component parses, renders, grades, and supports retries. Open-ended questions are not auto-graded.
 13. **TipTap rich text editor** is used for course descriptions via `src/components/shared/rich-text-editor.tsx`. It uses `@tiptap/starter-kit` with placeholder extension. Output is HTML stored in the course `description` field.
 14. **dnd-kit** is used for drag-and-drop reordering of sections and lectures in `CourseContentEditor`. Uses `@dnd-kit/core` + `@dnd-kit/sortable`. Reorder is persisted via dedicated `/reorder` API endpoints.
-15. **Wishlist** uses a dedicated API route (`/api/wishlist`) and helper (`src/lib/wishlist.ts`). The `WishlistButton` component handles optimistic UI toggling across pages.
+15. **Favourites** (renamed from Wishlist) uses `/api/favourites` and `src/lib/favourites.ts`. The `FavouriteButton` component handles optimistic UI toggling. The DB model is still named `Wishlist` but all UI and new code uses "favourites" terminology. Legacy `/api/wishlist` endpoint and `src/lib/wishlist.ts` still exist but are superseded.
 16. **Become Instructor** flow uses admin approval. Students submit an application (headline + bio) via `/api/instructor-applications`. Admins approve/reject at `/admin/applications`. On approval, a `prisma.$transaction` updates both the application status and the user's role to INSTRUCTOR. The JWT callback in `auth.ts` re-reads the role from DB when `trigger === "update"` is called via `useSession().update()` on the client. The become-instructor page (`src/app/(browse)/become-instructor/page.tsx`) is a server component that handles 5 states: logged-out, can-apply, pending, rejected, and already-instructor (redirect).
+17. **Shopping cart** uses `/api/cart` with `CartItem` model. `AddToCartButton` and `BuyNowButton` in course components. `CartDropdown` in the header provides a cart preview. Supports multi-course checkout via Stripe. Cart items are cleared after successful purchase. Cart page at `/cart` with `cart-grid.tsx`.
+18. **Reviews** API at `/api/courses/[id]/reviews`. `CourseReviewsSection` combines `RatingSummary`, `ReviewForm`, and `ReviewList`. One review per user per course (enforced by `@@unique([userId, courseId])`). Reviews support instructor responses.
+19. **Certificates auto-generate** on course completion when enrollment progress reaches 100%.
+20. **ImageUpload** component (`src/components/courses/image-upload.tsx`) handles course thumbnail uploads to Cloudinary, separate from `VideoUpload` which handles lecture videos.
 
 ---
 

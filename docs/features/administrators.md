@@ -91,11 +91,21 @@ Comprehensive platform metrics:
 - Completion rates
 - User retention
 
+## Instructor Applications
+
+Manage the instructor application workflow:
+
+- Students submit applications with headline and bio at `/become-instructor`
+- Applications appear in admin dashboard at `/admin/applications`
+- Admins can approve or reject with optional notes
+- On approval, user role changes from STUDENT to INSTRUCTOR via `prisma.$transaction`
+- Application statuses: PENDING, APPROVED, REJECTED
+
 ## Platform Settings
 
 Configure platform-wide settings:
 
 - Platform name and branding
-- Commission rates
-- Email templates
-- Feature flags
+- Commission rates (default 70/30 split)
+- Min/max course pricing
+- Platform fee percentage

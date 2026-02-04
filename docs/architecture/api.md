@@ -168,6 +168,16 @@ POST /api/checkout
 }
 ```
 
+### Verify Checkout Session
+
+```http
+POST /api/checkout/verify
+```
+
+**Requires:** Authenticated user
+
+Verifies a Stripe checkout session after redirect. Creates enrollments and clears cart items on success.
+
 ## Sections API
 
 ### Create Section
@@ -282,13 +292,13 @@ POST /api/upload/signature
 
 Returns a signed upload URL for client-side Cloudinary uploads.
 
-## Wishlist API
+## Favourites API
 
-### Add / Remove from Wishlist
+### Add / Remove from Favourites
 
 ```http
-POST   /api/wishlist   # Add course to wishlist
-DELETE /api/wishlist   # Remove course from wishlist
+POST   /api/favourites   # Add course to favourites
+DELETE /api/favourites   # Remove course from favourites
 ```
 
 **Requires:** Authenticated user
@@ -298,6 +308,140 @@ DELETE /api/wishlist   # Remove course from wishlist
 ```json
 {
   "courseId": "clx..."
+}
+```
+
+> **Note:** The legacy `/api/wishlist` endpoint still exists but `/api/favourites` is the active endpoint.
+
+## Cart API
+
+### Cart Management
+
+```http
+GET    /api/cart   # List cart items
+POST   /api/cart   # Add course to cart
+DELETE /api/cart   # Remove course from cart
+```
+
+**Requires:** Authenticated user
+
+**Request Body (POST/DELETE):**
+
+```json
+{
+  "courseId": "clx..."
+}
+```
+
+**Response (GET):**
+
+```json
+{
+  "items": [
+    {
+      "id": "...",
+      "course": {
+        "id": "...",
+        "title": "Web Development Bootcamp",
+        "price": 49.99,
+        "instructor": { ... }
+      }
+    }
+  ]
+}
+```
+
+## Reviews API
+
+### List Course Reviews
+
+```http
+GET /api/courses/:id/reviews
+```
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | number | Page number |
+| `limit` | number | Items per page |
+
+### Create Review
+
+```http
+POST /api/courses/:id/reviews
+```
+
+**Requires:** Authenticated user with enrollment
+
+**Request Body:**
+
+```json
+{
+  "rating": 5,
+  "comment": "Great course!"
+}
+```
+
+### Update / Delete Review
+
+```http
+PUT    /api/courses/:id/reviews/:reviewId
+DELETE /api/courses/:id/reviews/:reviewId
+```
+
+**Requires:** Review owner
+
+## Enrollments API
+
+### List / Create Enrollments
+
+```http
+GET  /api/enrollments   # List user's enrollments
+POST /api/enrollments   # Create enrollment (free courses)
+```
+
+**Requires:** Authenticated user
+
+**Request Body (POST):**
+
+```json
+{
+  "courseId": "clx..."
+}
+```
+
+## Instructor Applications API
+
+### Student Endpoints
+
+```http
+GET  /api/instructor-applications   # Get current user's application status
+POST /api/instructor-applications   # Submit application
+```
+
+**Request Body (POST):**
+
+```json
+{
+  "headline": "Full-Stack Developer",
+  "bio": "10 years of experience..."
+}
+```
+
+### Admin Endpoints
+
+```http
+GET   /api/admin/instructor-applications       # List all applications
+PATCH /api/admin/instructor-applications/:id   # Approve or reject
+```
+
+**Request Body (PATCH):**
+
+```json
+{
+  "status": "APPROVED",
+  "adminNote": "Welcome aboard!"
 }
 ```
 

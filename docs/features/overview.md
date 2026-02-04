@@ -43,7 +43,8 @@ graph TD
     - :material-play-circle: Watch video lectures
     - :material-chart-line: Track learning progress
     - :material-star: Leave reviews and ratings
-    - :material-heart: Manage wishlist
+    - :material-heart: Manage favourites
+    - :material-cart: Shopping cart with multi-course checkout
     - :material-certificate: Earn certificates
 
 === "Instructors"
