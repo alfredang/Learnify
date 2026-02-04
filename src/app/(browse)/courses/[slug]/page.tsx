@@ -15,6 +15,8 @@ import { MobileBottomBar } from "@/components/courses/mobile-bottom-bar"
 import { FavouriteButton } from "@/components/courses/favourite-button"
 import { AddToCartButton } from "@/components/courses/add-to-cart-button"
 import { BuyNowButton } from "@/components/courses/buy-now-button"
+import { CourseReviewsSection } from "@/components/courses/course-reviews-section"
+import { ITEMS_PER_PAGE } from "@/lib/constants"
 import {
   Play,
   Clock,
@@ -64,17 +66,11 @@ async function getCourse(slug: string) {
             },
           },
         },
-        reviews: {
-          take: 5,
-          orderBy: { createdAt: "desc" },
-          include: {
-            user: {
-              select: { id: true, name: true, image: true },
-            },
-          },
-        },
         _count: {
-          select: { enrollments: true, reviews: true },
+          select: {
+            enrollments: true,
+            reviews: { where: { isApproved: true } },
+          },
         },
       },
     })
@@ -128,6 +124,53 @@ async function checkCart(courseId: string, userId?: string) {
   }
 }
 
+async function getCourseReviews(courseId: string) {
+  const [reviews, distribution, total] = await Promise.all([
+    prisma.review.findMany({
+      where: { courseId, isApproved: true },
+      take: ITEMS_PER_PAGE,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, name: true, image: true } },
+      },
+    }),
+    prisma.review.groupBy({
+      by: ["rating"],
+      where: { courseId, isApproved: true },
+      _count: true,
+    }),
+    prisma.review.count({
+      where: { courseId, isApproved: true },
+    }),
+  ])
+
+  const ratingDistribution: Record<number, number> = {
+    1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
+  }
+  for (const item of distribution) {
+    ratingDistribution[item.rating] = item._count
+  }
+
+  return {
+    reviews,
+    total,
+    totalPages: Math.ceil(total / ITEMS_PER_PAGE),
+    ratingDistribution,
+  }
+}
+
+async function getUserReview(courseId: string, userId?: string) {
+  if (!userId) return null
+  try {
+    return await prisma.review.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+      select: { id: true, rating: true, comment: true },
+    })
+  } catch {
+    return null
+  }
+}
+
 export async function generateMetadata({
   params,
 }: CoursePageProps): Promise<Metadata> {
@@ -153,11 +196,14 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   }
 
   const session = await auth()
-  const [isEnrolled, isFavourited, isInCart] = await Promise.all([
-    checkEnrollment(course.id, session?.user?.id),
-    checkFavourite(course.id, session?.user?.id),
-    checkCart(course.id, session?.user?.id),
-  ])
+  const [isEnrolled, isFavourited, isInCart, reviewData, userReview] =
+    await Promise.all([
+      checkEnrollment(course.id, session?.user?.id),
+      checkFavourite(course.id, session?.user?.id),
+      checkCart(course.id, session?.user?.id),
+      getCourseReviews(course.id),
+      getUserReview(course.id, session?.user?.id),
+    ])
   const isOwner = session?.user?.id === course.instructorId
 
   const price = Number(course.price)
@@ -204,7 +250,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
       <CardContent className="p-6 space-y-4">
         <div className="flex items-baseline gap-2">
           {isEnrolled ? (
-            <span className="text-3xl font-bold text-green-600">Owned</span>
+            <Badge variant="secondary" className="font-semibold text-sm px-3 py-1">Owned</Badge>
           ) : course.isFree ? (
             <span className="text-3xl font-bold">Free</span>
           ) : (
@@ -529,39 +575,21 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
               </div>
 
               {/* Reviews */}
-              {course.reviews.length > 0 && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-4">Student Reviews</h2>
-                  <div className="space-y-4">
-                    {course.reviews.map((review) => (
-                      <Card key={review.id}>
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            <Avatar>
-                              <AvatarImage src={review.user.image || ""} />
-                              <AvatarFallback>
-                                {review.user.name?.[0] || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium">
-                                  {review.user.name}
-                                </span>
-                                <StarRating rating={review.rating} size="sm" />
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-2">
-                                {review.createdAt.toLocaleDateString()}
-                              </p>
-                              {review.comment && <p>{review.comment}</p>}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Student Reviews</h2>
+                <CourseReviewsSection
+                  courseId={course.id}
+                  isEnrolled={isEnrolled}
+                  isOwner={isOwner}
+                  initialReviews={JSON.parse(JSON.stringify(reviewData.reviews))}
+                  initialTotal={reviewData.total}
+                  initialTotalPages={reviewData.totalPages}
+                  initialRatingDistribution={reviewData.ratingDistribution}
+                  initialAverageRating={rating}
+                  initialTotalReviews={course._count.reviews}
+                  userReview={userReview ? JSON.parse(JSON.stringify(userReview)) : null}
+                />
+              </div>
             </div>
 
             {/* Desktop Sidebar - sticky, pulled up into hero */}
