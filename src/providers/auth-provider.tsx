@@ -8,5 +8,5 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  return <SessionProvider refetchOnWindowFocus>{children}</SessionProvider>
+  return <SessionProvider>{children}</SessionProvider>
 }

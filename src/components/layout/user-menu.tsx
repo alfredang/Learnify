@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { signOut } from "next-auth/react"
-import { useQueryClient } from "@tanstack/react-query"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,15 +41,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
-  const queryClient = useQueryClient()
-
   if (!user) return null
-
-  const handleSignOut = async () => {
-    await signOut({ redirect: false })
-    queryClient.clear()
-    window.location.href = "/"
-  }
 
   const initials = user.name
     ?.split(" ")
@@ -196,7 +187,7 @@ export function UserMenu({ user }: UserMenuProps) {
         {/* Logout */}
         <DropdownMenuItem
           className="cursor-pointer py-3 text-red-600 focus:text-red-600"
-          onClick={handleSignOut}
+          onClick={() => signOut({ callbackUrl: "/" })}
         >
           <LogOut className="mr-3 h-4 w-4" />
           <span>Log out</span>
