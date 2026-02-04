@@ -18,7 +18,7 @@ const publicRoutes = [
 
 const authRoutes = ["/login", "/register", "/forgot-password"]
 
-const studentRoutes = ["/my-courses", "/wishlist", "/purchases", "/profile"]
+const studentRoutes = ["/my-courses", "/favourites", "/purchases", "/profile"]
 const instructorRoutes = ["/instructor"]
 const adminRoutes = ["/admin"]
 

@@ -17,13 +17,13 @@ async function searchCourses(query: string) {
   return response.json()
 }
 
-async function fetchWishlistedIds(): Promise<Set<string>> {
+async function fetchFavouritedIds(): Promise<Set<string>> {
   try {
-    const res = await fetch("/api/wishlist")
+    const res = await fetch("/api/favourites")
     if (!res.ok) return new Set()
     const data = await res.json()
     return new Set(
-      data.wishlist?.map((item: { course: { id: string } }) => item.course.id) ?? []
+      data.favourites?.map((item: { course: { id: string } }) => item.course.id) ?? []
     )
   } catch {
     return new Set()
@@ -43,6 +43,19 @@ async function fetchCartIds(): Promise<Set<string>> {
   }
 }
 
+async function fetchEnrolledMap(): Promise<Map<string, number>> {
+  try {
+    const res = await fetch("/api/enrollments")
+    if (!res.ok) return new Map()
+    const data = await res.json()
+    return new Map(
+      data.enrollments?.map((item: { courseId: string; progress: number }) => [item.courseId, item.progress]) ?? []
+    )
+  } catch {
+    return new Map()
+  }
+}
+
 function SearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -59,14 +72,19 @@ function SearchContent() {
     enabled: !!query,
   })
 
-  const { data: wishlistedCourseIds } = useQuery({
-    queryKey: ["wishlist-ids"],
-    queryFn: fetchWishlistedIds,
+  const { data: favouritedCourseIds } = useQuery({
+    queryKey: ["favourited-ids"],
+    queryFn: fetchFavouritedIds,
   })
 
   const { data: cartCourseIds } = useQuery({
     queryKey: ["cart-ids"],
     queryFn: fetchCartIds,
+  })
+
+  const { data: enrolledCourseMap } = useQuery({
+    queryKey: ["enrolled-map"],
+    queryFn: fetchEnrolledMap,
   })
 
   const handleSearch = (e: React.FormEvent) => {
@@ -126,7 +144,7 @@ function SearchContent() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : data?.courses?.length > 0 ? (
-          <CourseGrid courses={data.courses} wishlistedCourseIds={wishlistedCourseIds} cartCourseIds={cartCourseIds} />
+          <CourseGrid courses={data.courses} favouritedCourseIds={favouritedCourseIds} cartCourseIds={cartCourseIds} enrolledCourseMap={enrolledCourseMap} />
         ) : query ? (
           <div className="text-center py-12">
             <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

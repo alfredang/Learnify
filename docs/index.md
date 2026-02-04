@@ -109,7 +109,8 @@
 | `/my-courses` | Student | Enrolled courses |
 | `/my-courses/[id]` | Student | Course overview |
 | `/my-courses/[id]/lectures/[id]` | Student | Lecture viewer (video, quiz) |
-| `/wishlist` | Student | Saved courses |
+| `/cart` | Student | Shopping cart |
+| `/favourites` | Student | Saved courses |
 | `/account` | Student | Account settings |
 | `/account/invoices` | Student | Invoice history |
 | `/account/purchases` | Student | Purchase history |
@@ -123,6 +124,7 @@
 | `/admin` | Admin | Admin dashboard |
 | `/admin/users` | Admin | User management |
 | `/admin/courses` | Admin | Course management |
+| `/admin/applications` | Admin | Instructor applications |
 
 ## API Endpoints
 
@@ -143,13 +145,21 @@
 | `/api/courses/[id]/sections/[sId]/lectures/reorder` | PUT | Reorder lectures |
 | `/api/courses/[id]/sections/[sId]/lectures/[lId]` | PUT/DELETE | Update/delete lecture |
 | `/api/lectures/[id]/progress` | POST | Update lecture progress |
+| `/api/courses/[id]/reviews` | GET/POST | List/create reviews |
+| `/api/courses/[id]/reviews/[rId]` | PUT/DELETE | Update/delete review |
+| `/api/enrollments` | GET/POST | Enrollment management |
+| `/api/cart` | GET/POST/DELETE | Cart management |
+| `/api/favourites` | POST/DELETE | Add/remove favourites |
 | `/api/checkout` | POST | Create Stripe checkout |
+| `/api/checkout/verify` | POST | Verify checkout session |
 | `/api/webhooks/stripe` | POST | Stripe webhooks |
 | `/api/upload/signature` | POST | Cloudinary upload signature |
-| `/api/wishlist` | POST/DELETE | Add/remove wishlist |
 | `/api/certificates/generate` | POST | Generate certificate |
 | `/api/certificates/[id]/download` | GET | Download certificate |
 | `/api/invoices/[id]` | GET | Get invoice details |
+| `/api/instructor-applications` | GET/POST | Application status/submit |
+| `/api/admin/instructor-applications` | GET | List applications (admin) |
+| `/api/admin/instructor-applications/[id]` | PATCH | Approve/reject (admin) |
 
 ## Quick Start
 
@@ -227,7 +237,9 @@ After seeding the database, use these accounts:
 | **Purchase** | Payment records |
 | **Earning** | Instructor earnings and payouts |
 | **Certificate** | Completion certificates |
-| **Wishlist** | Saved courses |
+| **Wishlist** | Favourites (saved courses) |
+| **CartItem** | Shopping cart items |
+| **InstructorApplication** | Instructor applications |
 | **PlatformSettings** | Configurable platform fees |
 
 ## Project Structure

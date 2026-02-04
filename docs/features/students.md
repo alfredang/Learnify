@@ -66,24 +66,37 @@ The student dashboard shows:
 - Continue learning buttons
 - Completion certificates
 
-### Wishlist
+### Favourites
 
-- Save courses for later
-- Get notified of price changes
-- Quick enroll from wishlist
+- Save courses for later with the favourite button
+- Browse saved courses on the favourites page
+- Quick enroll or add to cart from favourites
+- Optimistic UI toggling across pages
+
+### Shopping Cart
+
+- Add multiple courses to cart
+- View cart preview via dropdown in header
+- Dedicated cart page with full details
+- Multi-course Stripe checkout
+- Cart items cleared after successful purchase
 
 ## Reviews & Ratings
 
-After completing a course, students can:
+Students can review courses they are enrolled in:
 
 - Leave a star rating (1-5)
-- Write a detailed review
-- Help other students choose courses
+- Write a detailed review comment
+- One review per course per student
+- Rating summary with breakdown by star level
+- Paginated review list on course detail page
+- Instructors can respond to reviews
 
 ## Certificates
 
-Upon course completion, students receive:
+Certificates auto-generate when course progress reaches 100%:
 
 - Digital completion certificate
-- Shareable on LinkedIn
+- Auto-generated on course completion
 - Unique verification code
+- Downloadable from certificates page

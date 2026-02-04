@@ -13,7 +13,9 @@ erDiagram
     User ||--o{ Purchase : makes
     User ||--o{ Earning : receives
     User ||--o{ Wishlist : saves
+    User ||--o{ CartItem : carts
     User ||--o{ Certificate : earns
+    User ||--o{ InstructorApplication : submits
     Course ||--o{ Section : contains
     Section ||--o{ Lecture : contains
     Lecture ||--o{ Resource : has
@@ -22,6 +24,7 @@ erDiagram
     Course ||--o{ Review : receives
     Course ||--o{ Purchase : has
     Course ||--o{ Wishlist : saved_in
+    Course ||--o{ CartItem : added_to
     Course }o--|| Category : belongs_to
 ```
 
@@ -68,6 +71,12 @@ enum PayoutStatus {
   COMPLETED
   FAILED
 }
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
 ```
 
 ## Models
@@ -104,8 +113,10 @@ model User {
   progress     LectureProgress[]
   reviews      Review[]
   wishlist     Wishlist[]
+  cartItems    CartItem[]
   purchases    Purchase[]
   certificates Certificate[]
+  instructorApplications InstructorApplication[]
 }
 ```
 
@@ -157,6 +168,7 @@ model Course {
   enrollments  Enrollment[]
   reviews      Review[]
   wishlist     Wishlist[]
+  cartItems    CartItem[]
   purchases    Purchase[]
 }
 ```
@@ -292,7 +304,9 @@ model Review {
 }
 ```
 
-### Wishlist
+### Wishlist (Favourites)
+
+Backs the favourites feature. DB model is named `Wishlist` but the UI uses "favourites" terminology.
 
 ```prisma
 model Wishlist {
@@ -304,6 +318,46 @@ model Wishlist {
   courseId  String
 
   @@unique([userId, courseId])
+}
+```
+
+### CartItem
+
+Shopping cart for multi-course checkout. Items are cleared after successful purchase.
+
+```prisma
+model CartItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  user     User   @relation(fields: [userId])
+  userId   String
+  course   Course @relation(fields: [courseId])
+  courseId  String
+
+  @@unique([userId, courseId])
+}
+```
+
+### InstructorApplication
+
+Students apply to become instructors. Admins review and approve/reject.
+
+```prisma
+model InstructorApplication {
+  id        String            @id @default(cuid())
+  headline  String
+  bio       String            @db.Text
+  status    ApplicationStatus @default(PENDING)
+  adminNote String?           @db.Text
+
+  user         User   @relation(fields: [userId])
+  userId       String
+  reviewedBy   User?  @relation("ReviewedApplications", fields: [reviewedById])
+  reviewedById String?
+
+  @@index([userId])
+  @@index([status])
 }
 ```
 

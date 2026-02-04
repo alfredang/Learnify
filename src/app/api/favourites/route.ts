@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const courseId = searchParams.get("courseId")
 
-    // Check if a specific course is in wishlist
+    // Check if a specific course is favourited
     if (courseId) {
       const item = await prisma.wishlist.findUnique({
         where: {
@@ -24,11 +24,11 @@ export async function GET(request: Request) {
         },
       })
 
-      return NextResponse.json({ isWishlisted: !!item })
+      return NextResponse.json({ isFavourited: !!item })
     }
 
-    // List all wishlist items
-    const wishlist = await prisma.wishlist.findMany({
+    // List all favourite items
+    const favourites = await prisma.wishlist.findMany({
       where: { userId: session.user.id },
       include: {
         course: {
@@ -43,11 +43,11 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json({ wishlist })
+    return NextResponse.json({ favourites })
   } catch (error) {
-    console.error("Error fetching wishlist:", error)
+    console.error("Error fetching favourites:", error)
     return NextResponse.json(
-      { error: "Failed to fetch wishlist", code: "FETCH_FAILED" },
+      { error: "Failed to fetch favourites", code: "FETCH_FAILED" },
       { status: 500 }
     )
   }
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Check if already wishlisted - toggle behavior
+    // Check if already favourited - toggle behavior
     const existing = await prisma.wishlist.findUnique({
       where: {
         userId_courseId: { userId: session.user.id, courseId },
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
         where: { id: existing.id },
       })
 
-      return NextResponse.json({ wishlisted: false })
+      return NextResponse.json({ favourited: false })
     }
 
     await prisma.wishlist.create({
@@ -109,11 +109,11 @@ export async function POST(request: Request) {
       },
     })
 
-    return NextResponse.json({ wishlisted: true }, { status: 201 })
+    return NextResponse.json({ favourited: true }, { status: 201 })
   } catch (error) {
-    console.error("Error toggling wishlist:", error)
+    console.error("Error toggling favourite:", error)
     return NextResponse.json(
-      { error: "Failed to update wishlist", code: "UPDATE_FAILED" },
+      { error: "Failed to update favourites", code: "UPDATE_FAILED" },
       { status: 500 }
     )
   }

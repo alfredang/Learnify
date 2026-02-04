@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { signOut } from "next-auth/react"
 import { useQueryClient } from "@tanstack/react-query"
+import { serverSignOut } from "@/app/actions/auth"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,15 +47,8 @@ export function UserMenu({ user }: UserMenuProps) {
   if (!user) return null
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false })
     queryClient.clear()
-    // Clear auth cookies manually as fallback for proxy environments
-    document.cookie.split(";").forEach((c) => {
-      const name = c.trim().split("=")[0]
-      if (name.includes("authjs") || name.includes("next-auth")) {
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
-      }
-    })
+    await serverSignOut()
     window.location.href = "/"
   }
 
@@ -107,9 +100,9 @@ export function UserMenu({ user }: UserMenuProps) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/wishlist" className="cursor-pointer py-3">
+            <Link href="/favourites" className="cursor-pointer py-3">
               <Heart className="mr-3 h-4 w-4" />
-              <span>Wishlist</span>
+              <span>Favourites</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>

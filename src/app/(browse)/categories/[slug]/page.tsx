@@ -3,8 +3,9 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { getWishlistedCourseIds } from "@/lib/wishlist"
+import { getFavouritedCourseIds } from "@/lib/favourites"
 import { getCartItemCourseIds } from "@/lib/cart"
+import { getEnrolledCourseMap } from "@/lib/enrollment"
 import { CourseGrid } from "@/components/courses/course-grid"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, BookOpen } from "lucide-react"
@@ -72,9 +73,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound()
   }
 
-  const [wishlistedCourseIds, cartCourseIds] = await Promise.all([
-    getWishlistedCourseIds(session?.user?.id),
+  const [favouritedCourseIds, cartCourseIds, enrolledCourseMap] = await Promise.all([
+    getFavouritedCourseIds(session?.user?.id),
     getCartItemCourseIds(session?.user?.id),
+    getEnrolledCourseMap(session?.user?.id),
   ])
 
   return (
@@ -102,7 +104,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </div>
 
         {category.courses.length > 0 ? (
-          <CourseGrid courses={category.courses} wishlistedCourseIds={wishlistedCourseIds} cartCourseIds={cartCourseIds} />
+          <CourseGrid courses={category.courses} favouritedCourseIds={favouritedCourseIds} cartCourseIds={cartCourseIds} enrolledCourseMap={enrolledCourseMap} />
         ) : (
           <div className="text-center py-12">
             <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

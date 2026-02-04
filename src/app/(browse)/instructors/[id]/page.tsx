@@ -3,8 +3,9 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { getWishlistedCourseIds } from "@/lib/wishlist"
+import { getFavouritedCourseIds } from "@/lib/favourites"
 import { getCartItemCourseIds } from "@/lib/cart"
+import { getEnrolledCourseMap } from "@/lib/enrollment"
 import { CourseGrid } from "@/components/courses/course-grid"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
@@ -98,12 +99,14 @@ export default async function InstructorPage({
     notFound()
   }
 
-  let wishlistedCourseIds = new Set<string>()
+  let favouritedCourseIds = new Set<string>()
   let cartCourseIds = new Set<string>()
+  let enrolledCourseMap = new Map<string, number>()
   try {
-    ;[wishlistedCourseIds, cartCourseIds] = await Promise.all([
-      getWishlistedCourseIds(session?.user?.id),
+    ;[favouritedCourseIds, cartCourseIds, enrolledCourseMap] = await Promise.all([
+      getFavouritedCourseIds(session?.user?.id),
       getCartItemCourseIds(session?.user?.id),
+      getEnrolledCourseMap(session?.user?.id),
     ])
   } catch {
     // Gracefully handle database errors
@@ -269,8 +272,9 @@ export default async function InstructorPage({
           {totalCourses > 0 ? (
             <CourseGrid
               courses={instructor.courses}
-              wishlistedCourseIds={wishlistedCourseIds}
+              favouritedCourseIds={favouritedCourseIds}
               cartCourseIds={cartCourseIds}
+              enrolledCourseMap={enrolledCourseMap}
             />
           ) : (
             <div className="text-center py-12">

@@ -166,7 +166,7 @@ export default async function BecomeInstructorPage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-primary/10 via-background to-background">
+      <section className="py-8 md:py-12 bg-gradient-to-br from-primary/10 via-background to-background">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -210,7 +210,7 @@ export default async function BecomeInstructorPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 md:py-24">
+      <section id="why-teach" className="py-16 md:py-24">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Why Teach on Learnify?</h2>
