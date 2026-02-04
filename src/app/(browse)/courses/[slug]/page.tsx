@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { StarRating } from "@/components/shared/star-rating"
 import { MobileBottomBar } from "@/components/courses/mobile-bottom-bar"
-import { WishlistButton } from "@/components/courses/wishlist-button"
+import { FavouriteButton } from "@/components/courses/favourite-button"
 import { AddToCartButton } from "@/components/courses/add-to-cart-button"
 import { BuyNowButton } from "@/components/courses/buy-now-button"
 import {
@@ -100,7 +100,7 @@ async function checkEnrollment(courseId: string, userId?: string) {
   }
 }
 
-async function checkWishlist(courseId: string, userId?: string) {
+async function checkFavourite(courseId: string, userId?: string) {
   if (!userId) return false
   try {
     const item = await prisma.wishlist.findUnique({
@@ -153,9 +153,9 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   }
 
   const session = await auth()
-  const [isEnrolled, isWishlisted, isInCart] = await Promise.all([
+  const [isEnrolled, isFavourited, isInCart] = await Promise.all([
     checkEnrollment(course.id, session?.user?.id),
-    checkWishlist(course.id, session?.user?.id),
+    checkFavourite(course.id, session?.user?.id),
     checkCart(course.id, session?.user?.id),
   ])
   const isOwner = session?.user?.id === course.instructorId
@@ -203,7 +203,9 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
       </div>
       <CardContent className="p-6 space-y-4">
         <div className="flex items-baseline gap-2">
-          {course.isFree ? (
+          {isEnrolled ? (
+            <span className="text-3xl font-bold text-green-600">Owned</span>
+          ) : course.isFree ? (
             <span className="text-3xl font-bold">Free</span>
           ) : (
             <>
@@ -245,9 +247,9 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         )}
 
         {!isEnrolled && !isOwner && (
-          <WishlistButton
+          <FavouriteButton
             courseId={course.id}
-            initialWishlisted={isWishlisted}
+            initialFavourited={isFavourited}
             variant="full"
           />
         )}

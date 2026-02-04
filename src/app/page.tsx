@@ -18,8 +18,9 @@ import {
 } from "lucide-react"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { getWishlistedCourseIds } from "@/lib/wishlist"
+import { getFavouritedCourseIds } from "@/lib/favourites"
 import { getCartItemCourseIds } from "@/lib/cart"
+import { getEnrolledCourseMap } from "@/lib/enrollment"
 import { CourseGrid } from "@/components/courses/course-grid"
 
 const iconMap: Record<string, React.ElementType> = {
@@ -102,12 +103,14 @@ export default async function HomePage() {
     getStats(),
     auth(),
   ])
-  let wishlistedCourseIds = new Set<string>()
+  let favouritedCourseIds = new Set<string>()
   let cartCourseIds = new Set<string>()
+  let enrolledCourseMap = new Map<string, number>()
   try {
-    ;[wishlistedCourseIds, cartCourseIds] = await Promise.all([
-      getWishlistedCourseIds(session?.user?.id),
+    ;[favouritedCourseIds, cartCourseIds, enrolledCourseMap] = await Promise.all([
+      getFavouritedCourseIds(session?.user?.id),
       getCartItemCourseIds(session?.user?.id),
+      getEnrolledCourseMap(session?.user?.id),
     ])
   } catch {
     // Gracefully handle database errors (e.g., Neon cold start)
@@ -116,7 +119,7 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative py-12 md:py-20 lg:py-32 bg-gradient-to-br from-primary/10 via-background to-background overflow-hidden">
+      <section className="relative py-8 md:py-12 bg-gradient-to-br from-primary/10 via-background to-background overflow-hidden">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div className="space-y-6 md:space-y-8 text-center lg:text-left">
@@ -282,7 +285,7 @@ export default async function HomePage() {
                 <Link href="/courses">View All</Link>
               </Button>
             </div>
-            <CourseGrid courses={featuredCourses} wishlistedCourseIds={wishlistedCourseIds} cartCourseIds={cartCourseIds} />
+            <CourseGrid courses={featuredCourses} favouritedCourseIds={favouritedCourseIds} cartCourseIds={cartCourseIds} enrolledCourseMap={enrolledCourseMap} />
           </div>
         </section>
       )}

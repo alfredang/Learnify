@@ -86,7 +86,7 @@ export interface CourseFilters {
   page?: number
 }
 
-export type WishlistCourse = {
+export type FavouriteCourse = {
   id: string
   createdAt: Date
   course: CourseWithInstructor

@@ -18,7 +18,7 @@ const navItems = [
 
 const studentItems = [
   { href: "/my-courses", label: "My Learning" },
-  { href: "/wishlist", label: "Wishlist" },
+  { href: "/favourites", label: "Favourites" },
   { href: "/purchases", label: "Purchases" },
 ]
 

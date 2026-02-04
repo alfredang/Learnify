@@ -3,14 +3,14 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getCartItemCourseIds } from "@/lib/cart"
-import { WishlistGrid } from "./wishlist-grid"
+import { FavouritesGrid } from "./favourites-grid"
 
 export const metadata: Metadata = {
-  title: "My Wishlist",
+  title: "My Favourite Courses",
   description: "Courses you've saved for later",
 }
 
-async function getWishlist(userId: string) {
+async function getFavourites(userId: string) {
   try {
     const items = await prisma.wishlist.findMany({
       where: { userId },
@@ -29,7 +29,7 @@ async function getWishlist(userId: string) {
 
     return JSON.parse(JSON.stringify(items))
   } catch (error) {
-    console.error("Failed to fetch wishlist:", error)
+    console.error("Failed to fetch favourites:", error)
     return []
   }
 }
@@ -47,23 +47,23 @@ async function getEnrolledCourseIds(userId: string) {
   }
 }
 
-export default async function WishlistPage() {
+export default async function FavouritesPage() {
   const session = await auth()
 
   if (!session?.user) {
-    redirect("/login?callbackUrl=/wishlist")
+    redirect("/login?callbackUrl=/favourites")
   }
 
-  const [wishlist, enrolledCourseIds, cartCourseIds] = await Promise.all([
-    getWishlist(session.user.id),
+  const [favourites, enrolledCourseIds, cartCourseIds] = await Promise.all([
+    getFavourites(session.user.id),
     getEnrolledCourseIds(session.user.id),
     getCartItemCourseIds(session.user.id),
   ])
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-8">My Wishlist</h1>
-      <WishlistGrid initialItems={wishlist} enrolledCourseIds={enrolledCourseIds} cartCourseIds={Array.from(cartCourseIds)} />
+      <h1 className="text-3xl font-bold mb-8">My Favourite Courses</h1>
+      <FavouritesGrid initialItems={favourites} enrolledCourseIds={enrolledCourseIds} cartCourseIds={Array.from(cartCourseIds)} />
     </div>
   )
 }

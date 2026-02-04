@@ -166,7 +166,7 @@ export default async function BecomeInstructorPage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-primary/10 via-background to-background">
+      <section className="py-8 md:py-12 bg-gradient-to-br from-primary/10 via-background to-background">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>

@@ -11,15 +11,15 @@ import { Heart, Trash2, Users } from "lucide-react"
 import { formatPrice } from "@/lib/stripe"
 import { toast } from "sonner"
 import { AddToCartButton } from "@/components/courses/add-to-cart-button"
-import type { WishlistCourse } from "@/types"
+import type { FavouriteCourse } from "@/types"
 
-interface WishlistGridProps {
-  initialItems: WishlistCourse[]
+interface FavouritesGridProps {
+  initialItems: FavouriteCourse[]
   enrolledCourseIds: string[]
   cartCourseIds?: string[]
 }
 
-export function WishlistGrid({ initialItems, enrolledCourseIds, cartCourseIds = [] }: WishlistGridProps) {
+export function FavouritesGrid({ initialItems, enrolledCourseIds, cartCourseIds = [] }: FavouritesGridProps) {
   const [items, setItems] = useState(initialItems)
   const enrolledSet = new Set(enrolledCourseIds)
   const cartSet = new Set(cartCourseIds)
@@ -28,7 +28,7 @@ export function WishlistGrid({ initialItems, enrolledCourseIds, cartCourseIds = 
     return (
       <EmptyState
         icon={Heart}
-        title="Your wishlist is empty"
+        title="Your favourites list is empty"
         description="Browse courses and save the ones you like for later"
         actionLabel="Browse Courses"
         actionHref="/courses"
@@ -39,7 +39,7 @@ export function WishlistGrid({ initialItems, enrolledCourseIds, cartCourseIds = 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => (
-        <WishlistCard
+        <FavouriteCard
           key={item.id}
           item={item}
           isEnrolled={enrolledSet.has(item.course.id)}
@@ -51,14 +51,14 @@ export function WishlistGrid({ initialItems, enrolledCourseIds, cartCourseIds = 
   )
 }
 
-interface WishlistCardProps {
-  item: WishlistCourse
+interface FavouriteCardProps {
+  item: FavouriteCourse
   isEnrolled: boolean
   isInCart: boolean
   onRemove: (id: string) => void
 }
 
-function WishlistCard({ item, isEnrolled, isInCart, onRemove }: WishlistCardProps) {
+function FavouriteCard({ item, isEnrolled, isInCart, onRemove }: FavouriteCardProps) {
   const [isPending, startTransition] = useTransition()
   const course = item.course
   const price = Number(course.price)
@@ -68,20 +68,20 @@ function WishlistCard({ item, isEnrolled, isInCart, onRemove }: WishlistCardProp
   function handleRemove() {
     startTransition(async () => {
       try {
-        const res = await fetch("/api/wishlist", {
+        const res = await fetch("/api/favourites", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseId: course.id }),
         })
 
         if (!res.ok) {
-          throw new Error("Failed to remove from wishlist")
+          throw new Error("Failed to remove from favourites")
         }
 
         onRemove(item.id)
-        toast.success("Removed from wishlist")
+        toast.success("Removed from favourites")
       } catch {
-        toast.error("Failed to remove from wishlist")
+        toast.error("Failed to remove from favourites")
       }
     })
   }
@@ -165,7 +165,7 @@ function WishlistCard({ item, isEnrolled, isInCart, onRemove }: WishlistCardProp
             size="icon"
             onClick={handleRemove}
             disabled={isPending}
-            aria-label="Remove from wishlist"
+            aria-label="Remove from favourites"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

@@ -117,9 +117,9 @@ export function Header() {
                 </Button>
               )}
               <Button variant="ghost" size="icon" asChild>
-                <Link href="/wishlist">
+                <Link href="/favourites">
                   <Heart className="h-5 w-5" />
-                  <span className="sr-only">Wishlist</span>
+                  <span className="sr-only">Favourites</span>
                 </Link>
               </Button>
               <CartDropdown />

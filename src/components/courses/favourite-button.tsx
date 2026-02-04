@@ -8,20 +8,20 @@ import { toast } from "sonner"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
-interface WishlistButtonProps {
+interface FavouriteButtonProps {
   courseId: string
-  initialWishlisted?: boolean
+  initialFavourited?: boolean
   variant?: "icon" | "full"
   className?: string
 }
 
-export function WishlistButton({
+export function FavouriteButton({
   courseId,
-  initialWishlisted = false,
+  initialFavourited = false,
   variant = "icon",
   className,
-}: WishlistButtonProps) {
-  const [wishlisted, setWishlisted] = useState(initialWishlisted)
+}: FavouriteButtonProps) {
+  const [favourited, setFavourited] = useState(initialFavourited)
   const [isPending, startTransition] = useTransition()
   const { data: session } = useSession()
   const router = useRouter()
@@ -37,7 +37,7 @@ export function WishlistButton({
 
     startTransition(async () => {
       try {
-        const res = await fetch("/api/wishlist", {
+        const res = await fetch("/api/favourites", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseId }),
@@ -45,18 +45,18 @@ export function WishlistButton({
 
         if (!res.ok) {
           const data = await res.json()
-          throw new Error(data.error || "Failed to update wishlist")
+          throw new Error(data.error || "Failed to update favourites")
         }
 
         const data = await res.json()
-        setWishlisted(data.wishlisted)
+        setFavourited(data.favourited)
 
         toast.success(
-          data.wishlisted ? "Added to wishlist" : "Removed from wishlist"
+          data.favourited ? "Added to favourites" : "Removed from favourites"
         )
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Failed to update wishlist"
+          error instanceof Error ? error.message : "Failed to update favourites"
         )
       }
     })
@@ -74,10 +74,10 @@ export function WishlistButton({
         <Heart
           className={cn(
             "h-4 w-4 mr-2",
-            wishlisted && "fill-red-500 text-red-500"
+            favourited && "fill-red-500 text-red-500"
           )}
         />
-        {wishlisted ? "Wishlisted" : "Add to Wishlist"}
+        {favourited ? "Favourited" : "Add to Favourites"}
       </Button>
     )
   }
@@ -91,12 +91,12 @@ export function WishlistButton({
         isPending && "opacity-50",
         className
       )}
-      aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+      aria-label={favourited ? "Remove from favourites" : "Add to favourites"}
     >
       <Heart
         className={cn(
           "h-5 w-5",
-          wishlisted ? "fill-red-500 text-red-500" : "text-slate-700"
+          favourited ? "fill-red-500 text-red-500" : "text-slate-700"
         )}
       />
     </button>

@@ -100,9 +100,9 @@ export function UserMenu({ user }: UserMenuProps) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/wishlist" className="cursor-pointer py-3">
+            <Link href="/favourites" className="cursor-pointer py-3">
               <Heart className="mr-3 h-4 w-4" />
-              <span>Wishlist</span>
+              <span>Favourites</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
