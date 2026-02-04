@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Search, Menu, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { UserMenu } from "./user-menu"
 import { MobileNav } from "./mobile-nav"
 import { CartDropdown } from "./cart-dropdown"
@@ -43,7 +43,8 @@ export function Header() {
               <span className="sr-only">Toggle menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="pr-0">
+          <SheetContent side="left" className="overflow-y-auto pr-0">
+            <SheetTitle className="sr-only">Navigation menu</SheetTitle>
             <MobileNav />
           </SheetContent>
         </Sheet>
