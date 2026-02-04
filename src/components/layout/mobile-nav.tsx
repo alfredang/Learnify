@@ -19,7 +19,7 @@ const navItems = [
 const studentItems = [
   { href: "/my-courses", label: "My Learning", icon: BookOpen },
   { href: "/favourites", label: "Favourites", icon: Heart },
-  { href: "/purchases", label: "Purchases", icon: Receipt },
+  { href: "/account/purchases", label: "Purchases", icon: Receipt },
 ]
 
 export function MobileNav() {
